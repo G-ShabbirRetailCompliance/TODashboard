@@ -162,6 +162,17 @@
     border:1.3px solid var(--line); border-radius:5px; background:#FFFDF5;
   }
   .remark-input:focus{ outline:none; border-color:var(--blue); background:#fff; }
+  .review-badge{
+    font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:12px;
+    white-space:nowrap; display:inline-block;
+  }
+  .review-badge.ok{ background:var(--teal-tint); color:var(--teal); }
+  .review-btn{
+    background:var(--teal); color:#fff; border:none; padding:5px 12px; font-size:10.5px;
+    font-weight:700; border-radius:5px; cursor:pointer; white-space:nowrap;
+  }
+  .review-btn:hover{ background:#0D5E57; }
+  .review-btn:disabled{ opacity:.6; cursor:default; }
 
   ::-webkit-scrollbar{ width:8px; height:8px; }
   ::-webkit-scrollbar-thumb{ background:#c7d2e0; border-radius:4px; }
@@ -311,7 +322,7 @@
             <th data-k="transfer">Transfer no</th><th data-k="store">Store</th><th data-k="region">Region</th>
             <th data-k="route">Route</th><th data-k="cm">Cluster manager</th><th data-k="qty">Pending qty</th>
             <th data-k="date">Created date</th><th data-k="age">Age (days)</th><th data-k="slab">Age slab</th>
-            <th>Remarks</th>
+            <th>Remarks</th><th>Review</th>
           </tr></thead>
           <tbody id="pdTableBody"></tbody>
         </table>
@@ -334,7 +345,7 @@
             <th data-k="transfer">Transfer no</th><th data-k="store">Store</th><th data-k="region">Region</th>
             <th data-k="route">Route</th><th data-k="cm">Cluster manager</th><th data-k="qty">Pending qty</th>
             <th data-k="date">Ship date</th><th data-k="age">Age (days)</th><th data-k="slab">Age slab</th>
-            <th>Remarks</th>
+            <th>Remarks</th><th>Review</th>
           </tr></thead>
           <tbody id="prTableBody"></tbody>
         </table>
@@ -373,6 +384,7 @@ let SORT_PD = { key:'age', dir:'desc' };
 let SORT_PR = { key:'age', dir:'desc' };
 let charts = {};
 let remarksMap = {};
+let validationMap = {}; // transfer no -> { by, at } — cluster manager review status, from live data only
 
 function loadRemarks(){
   try{ remarksMap = JSON.parse(localStorage.getItem('to_dashboard_remarks') || '{}'); }
@@ -399,35 +411,117 @@ const HARDCODED_API_URL = 'https://script.google.com/macros/s/AKfycbzNF9rcpw7KQj
 let API_URL = HARDCODED_API_URL;
 try{ API_URL = localStorage.getItem('to_dashboard_api_url') || HARDCODED_API_URL; }catch(e){ API_URL = HARDCODED_API_URL; }
 
-// A URL like dashboard.html?store=S2012DML locks the whole page to that
-// store's own pending lines only, hides admin controls (upload, publish,
-// filters, charts, exports), and tags any remark that store submits with its
-// code so the backend can reject remarks aimed at a different store's TOs.
-let LOCKED_STORE = '';
+// A URL like dashboard.html?code=P2MTAHB7 locks the whole page to one
+// store's own pending lines only. The code is an opaque, hard-to-guess
+// credential — the actual store it maps to is resolved server-side via the
+// StoreAccess sheet and never exposed back to the browser as a mapping list.
+// Admin controls (upload, publish, filters, charts, exports) are hidden.
+//
+// dashboard.html?admin=ADMIN_KEY reveals the upload/publish/live-data
+// controls. Anyone without that exact key sees a read-only dashboard —
+// this is the same shared-secret caveat as before: fine to stop casual
+// visitors from finding the publish button, not real security since the
+// key sits in this file's source.
+const ADMIN_KEY = 'sapphire-admin-2026';
+
+let LOCKED_ACCESS_CODE = '';
+let LOCKED_CLUSTER_CODE = '';
+let IS_ADMIN = false;
 try{
   const qs = new URLSearchParams(window.location.search);
-  LOCKED_STORE = (qs.get('store') || '').trim();
-}catch(e){ LOCKED_STORE = ''; }
+  LOCKED_ACCESS_CODE = (qs.get('code') || '').trim();
+  LOCKED_CLUSTER_CODE = (qs.get('cm') || '').trim();
+  IS_ADMIN = qs.get('admin') === ADMIN_KEY;
+}catch(e){ LOCKED_ACCESS_CODE = ''; LOCKED_CLUSTER_CODE = ''; IS_ADMIN = false; }
 
-function enterStoreMode(){
+function enterStoreMode(storeCode, storeName){
   document.getElementById('livePanel').style.display = 'none';
   document.getElementById('adminToolbar').style.display = 'none';
   document.getElementById('tabsBar').style.display = 'none';
   document.getElementById('adminOnlySection').style.display = 'none';
   const banner = document.getElementById('storeBanner');
   banner.style.display = 'block';
-  banner.innerHTML = 'Store view — ' + LOCKED_STORE +
+  banner.innerHTML = 'Store view — ' + storeCode + (storeName ? ' — ' + storeName : '') +
     '<div class="sub">Showing only this store\'s pending transfer orders. Add remarks against your own lines below.</div>';
 }
 
-function getSubmitterName(){
-  let name = '';
-  try{ name = localStorage.getItem('to_dashboard_submitter_name') || ''; }catch(e){}
-  if(!name){
-    name = prompt('Your name (shown against remarks you submit):') || '';
-    try{ localStorage.setItem('to_dashboard_submitter_name', name); }catch(e){}
+function hideAdminControls(){
+  document.getElementById('livePanel').style.display = 'none';
+  document.getElementById('adminToolbar').style.display = 'none';
+}
+
+function getAccessCode(){
+  if(LOCKED_ACCESS_CODE) return LOCKED_ACCESS_CODE;
+  let code = '';
+  try{ code = localStorage.getItem('to_dashboard_access_code') || ''; }catch(e){}
+  if(!code){
+    code = (prompt('Enter your store access code to add remarks:') || '').trim();
+    try{ if(code) localStorage.setItem('to_dashboard_access_code', code); }catch(e){}
   }
-  return name;
+  return code;
+}
+
+function fetchStoreData(code){
+  if(!API_URL){
+    document.getElementById('errBox').textContent = 'This store link has no live data source configured yet — ask compliance to finish setting up the live dashboard.';
+    document.getElementById('errBox').classList.add('show');
+    return;
+  }
+  fetch(API_URL + '?action=getStoreData&code=' + encodeURIComponent(code))
+    .then(r => r.json())
+    .then(data => {
+      if(data.error){
+        document.getElementById('errBox').textContent = 'That store link isn\'t valid — check the code with compliance.';
+        document.getElementById('errBox').classList.add('show');
+        return;
+      }
+      const rows = (data.rows||[]).map(fromApiRow);
+      ingestRows(rows);
+      const genDate = data.lastUpdated ? new Date(data.lastUpdated) : new Date();
+      enterStoreMode(data.storeCode, data.storeName);
+      activateDashboard(data.storeName || data.storeCode, 0, genDate);
+    })
+    .catch(err => {
+      document.getElementById('errBox').textContent = 'Could not reach the live data source — try again shortly.';
+      document.getElementById('errBox').classList.add('show');
+      console.error('fetchStoreData error', err);
+    });
+}
+
+function enterClusterMode(clusterManager){
+  document.getElementById('livePanel').style.display = 'none';
+  document.getElementById('adminToolbar').style.display = 'none';
+  const banner = document.getElementById('storeBanner');
+  banner.style.display = 'block';
+  banner.innerHTML = 'Cluster manager view — ' + clusterManager +
+    '<div class="sub">Showing this cluster\'s stores only. Use the review button on each remark to validate it.</div>';
+}
+
+function fetchClusterData(code){
+  if(!API_URL){
+    document.getElementById('errBox').textContent = 'This cluster link has no live data source configured yet — ask compliance to finish setting up the live dashboard.';
+    document.getElementById('errBox').classList.add('show');
+    return;
+  }
+  fetch(API_URL + '?action=getClusterData&code=' + encodeURIComponent(code))
+    .then(r => r.json())
+    .then(data => {
+      if(data.error){
+        document.getElementById('errBox').textContent = 'That cluster link isn\'t valid — check the code with compliance.';
+        document.getElementById('errBox').classList.add('show');
+        return;
+      }
+      const rows = (data.rows||[]).map(fromApiRow);
+      ingestRows(rows);
+      const genDate = data.lastUpdated ? new Date(data.lastUpdated) : new Date();
+      enterClusterMode(data.clusterManager);
+      activateDashboard(data.clusterManager, 0, genDate);
+    })
+    .catch(err => {
+      document.getElementById('errBox').textContent = 'Could not reach the live data source — try again shortly.';
+      document.getElementById('errBox').classList.add('show');
+      console.error('fetchClusterData error', err);
+    });
 }
 
 function setLiveStatus(text, cls){
@@ -466,8 +560,18 @@ function fromApiRow(o){
     region: o.Region, div: o.SubRegion, route: o.Route, cm: o.ClusterManager,
     qty: Number(o.PendingQty)||0, drivingDate: reviveDate(o.DrivingDate),
     age: (o.AgeDays==='' || o.AgeDays==null) ? null : Number(o.AgeDays), slab: o.AgeSlab,
-    _remark: o.Remark || ''
+    _remark: o.Remark || '', _validatedBy: o.ValidatedBy || '', _validatedAt: o.ValidatedAt || ''
   };
+}
+
+function ingestRows(rows){
+  RAW.pd = rows.filter(r=>r.flow==='Pending Dispatch');
+  RAW.pr = rows.filter(r=>r.flow==='Pending Receiving');
+  rows.forEach(r=>{
+    if(r._remark){ remarksMap[r.transfer] = r._remark; }
+    validationMap[r.transfer] = { by: r._validatedBy, at: r._validatedAt };
+  });
+  saveRemarks();
 }
 
 function fetchLiveData(userInitiated){
@@ -478,10 +582,7 @@ function fetchLiveData(userInitiated){
     .then(r => r.json())
     .then(data => {
       const rows = (data.rows||[]).map(fromApiRow);
-      RAW.pd = rows.filter(r=>r.flow==='Pending Dispatch');
-      RAW.pr = rows.filter(r=>r.flow==='Pending Receiving');
-      rows.forEach(r=>{ if(r._remark){ remarksMap[r.transfer] = r._remark; } });
-      saveRemarks();
+      ingestRows(rows);
       const genDate = data.lastUpdated ? new Date(data.lastUpdated) : new Date();
       activateDashboard('Live dashboard', 0, genDate);
       const badge = document.getElementById('recordCountTop');
@@ -512,16 +613,44 @@ function submitRemarkToLive(el){
   if(!API_URL) return;
   const tn = el.dataset.tn;
   const value = el.value;
-  const submittedBy = LOCKED_STORE ? ('Store ' + LOCKED_STORE) : getSubmitterName();
-  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'submitRemark', transferNo:tn, remark:value, submittedBy, storeCode: LOCKED_STORE || undefined }) })
+  if(!value || !value.trim()) return; // don't prompt for a code just to clear a remark
+  const code = getAccessCode();
+  if(!code){
+    alert('An access code is required to save remarks — this remark was kept on your screen but not saved to the live sheet.');
+    return;
+  }
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'submitRemark', transferNo:tn, remark:value, accessCode: code }) })
     .then(r => r.json())
     .then(res => {
       if(!res.success){
         console.warn('Remark submit failed', res);
-        if(LOCKED_STORE) alert('Could not save that remark: ' + (res.message||'rejected by server') + '. This usually means this transfer order does not belong to your store.');
+        alert('Could not save that remark: ' + (res.message||'rejected by server') + '. This usually means the code is wrong, or this transfer order does not belong to your store.');
       }
     })
     .catch(err => console.warn('Remark submit error', err));
+}
+
+function validateRemarkLive(tn, btn){
+  if(!API_URL || !LOCKED_CLUSTER_CODE) return;
+  btn.disabled = true;
+  btn.textContent = 'Reviewing…';
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'validateRemark', transferNo:tn, clusterCode: LOCKED_CLUSTER_CODE }) })
+    .then(r => r.json())
+    .then(res => {
+      if(res.success){
+        validationMap[tn] = { by: 'pending-refresh', at: new Date().toISOString() };
+        applyFilters(); // re-render with the now-reviewed status shown
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Review';
+        alert('Could not mark this reviewed: ' + (res.message||'rejected by server'));
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.textContent = 'Review';
+      console.warn('validateRemarkLive error', err);
+    });
 }
 
 // Minimal CSV line parser handling quoted fields with embedded commas/quotes.
@@ -841,19 +970,19 @@ function loadFromEmbedded(payload){
 }
 
 (function initFromEmbedded(){
-  if(LOCKED_STORE) enterStoreMode();
+  if(!LOCKED_ACCESS_CODE && !LOCKED_CLUSTER_CODE && !IS_ADMIN) hideAdminControls();
 
   const urlInput = document.getElementById('apiUrlInput');
   if(urlInput && API_URL) urlInput.value = API_URL;
 
-  if(LOCKED_STORE){
+  if(LOCKED_ACCESS_CODE){
     // A store link only ever makes sense against live data — there's no
     // local upload path in store mode, so don't fall through to a snapshot.
-    if(API_URL) fetchLiveData(false);
-    else{
-      document.getElementById('errBox').textContent = 'This store link has no live data source configured yet — ask compliance to finish setting up the live dashboard.';
-      document.getElementById('errBox').classList.add('show');
-    }
+    fetchStoreData(LOCKED_ACCESS_CODE);
+    return;
+  }
+  if(LOCKED_CLUSTER_CODE){
+    fetchClusterData(LOCKED_CLUSTER_CODE);
     return;
   }
 
@@ -921,7 +1050,9 @@ function showTab(tab){
 }
 
 function passesFilters(r){
-  if(LOCKED_STORE && String(r.store||'').toUpperCase()!==LOCKED_STORE.toUpperCase()) return false;
+  // Store mode's data is already filtered server-side by fetchStoreData — no
+  // client-side store check needed here (LOCKED_ACCESS_CODE is an opaque
+  // credential, not something comparable to r.store).
   if(FILTERS.regions.size && !FILTERS.regions.has(r.region)) return false;
   if(FILTERS.cms.size && !FILTERS.cms.has(r.cm)) return false;
   if(FILTERS.slabs.size && !FILTERS.slabs.has(r.slab)) return false;
@@ -1116,6 +1247,18 @@ function renderTable(flow, rows){
   document.getElementById(bodyId).innerHTML = sorted.slice(0,500).map(r=>{
     const tn = r.transfer||'';
     const remVal = (remarksMap[tn]||'').replace(/"/g,'&quot;');
+    const remarkCell = LOCKED_CLUSTER_CODE
+      ? '<td>'+(remVal ? remVal.replace(/&quot;/g,'"') : '<span style="color:var(--ink-mute);">—</span>')+'</td>'
+      : '<td><input type="text" class="remark-input" data-tn="'+tn+'" value="'+remVal+'" placeholder="Add remark…" oninput="updateRemark(this)" onblur="submitRemarkToLive(this)"></td>';
+    const val = validationMap[tn];
+    let reviewCell;
+    if(LOCKED_CLUSTER_CODE){
+      reviewCell = (val && val.by)
+        ? '<td><span class="review-badge ok">&#10003; Reviewed</span></td>'
+        : (remVal ? '<td><button class="review-btn" onclick="validateRemarkLive(\''+tn+'\', this)">Review</button></td>' : '<td><span style="color:var(--ink-mute);">No remark yet</span></td>');
+    } else {
+      reviewCell = (val && val.by) ? '<td><span class="review-badge ok">&#10003; Reviewed</span></td>' : '<td><span style="color:var(--ink-mute);">—</span></td>';
+    }
     return '<tr class="'+(r.age!=null && r.age>10 ? 'crit' : '')+'">'+
     '<td>'+tn+'</td>'+
     '<td>'+r.store+' — '+(r.storeName||'')+'</td>'+
@@ -1126,7 +1269,7 @@ function renderTable(flow, rows){
     '<td>'+fmtDate(r.drivingDate)+'</td>'+
     '<td>'+(r.age==null?'—':r.age)+'</td>'+
     '<td>'+r.slab+'</td>'+
-    '<td><input type="text" class="remark-input" data-tn="'+tn+'" value="'+remVal+'" placeholder="Add remark…" oninput="updateRemark(this)" onblur="submitRemarkToLive(this)"></td>'+
+    remarkCell + reviewCell +
     '</tr>';
   }).join('');
   document.getElementById(countId).textContent = rows.length.toLocaleString() + ' matching lines' + (rows.length>500 ? ' (first 500 shown)' : '');
