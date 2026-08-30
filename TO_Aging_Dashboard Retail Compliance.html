@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Transfer Order Aging — Compliance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  :root{
+    --navy:#122544; --navy-deep:#0B1A30;
+    --blue:#2E5FA3; --blue-tint:#EAF1FA;
+    --orange:#B85C33; --orange-tint:#FAEEE7;
+    --teal:#12756C; --teal-tint:#E7F2F0; --amber:#B8842E; --red:#AE3A3A; --red-tint:#F7EAEA; --violet:#544A8F; --green:#2E7A4F;
+    --ink:#182233; --ink-soft:#3D4652; --ink-mute:#5C6672;
+    --paper:#FFFFFF; --bg:#F3F5F9; --line:#DEE3EC;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:Arial, "Helvetica Neue", Helvetica, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    letter-spacing:.1px;
+  }
+  .wrap{max-width:1240px; margin:0 auto; padding:0 24px 60px;}
+
+  .masthead{
+    background:var(--navy); color:#fff; margin:0 -24px 24px; padding:24px 24px 20px;
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom:3px solid var(--blue);
+  }
+  .masthead .eyebrow{ font-size:10.5px; letter-spacing:2.2px; text-transform:uppercase; color:#8FADD6; margin:0 0 6px; font-weight:700; }
+  .masthead h1{ font-size:23px; font-weight:700; margin:0; letter-spacing:.2px; }
+  .masthead .meta{ text-align:right; font-size:11px; color:#A9BEDA; line-height:1.7; }
+  .masthead .badge{
+    display:inline-block; background:var(--amber); color:#2E1F05; font-weight:700; font-size:11px;
+    padding:3px 10px; border-radius:3px; margin-top:6px; letter-spacing:.2px;
+  }
+
+  .upload-box{
+    border:1.5px dashed var(--blue); padding:22px; text-align:center; margin-bottom:22px;
+    background:var(--blue-tint); border-radius:8px;
+  }
+  .upload-box.compact{ padding:12px 20px; text-align:left; display:flex; align-items:center; justify-content:space-between; border-style:solid; border-color:var(--line); }
+  .upload-box p{ margin:0 0 10px; font-size:13px; color:var(--ink-soft); }
+  .upload-box .req{ font-size:11px; color:var(--ink-mute); margin-top:8px; }
+  button, .btn{
+    font-family:Arial, sans-serif; background:var(--blue); color:#fff;
+    border:none; padding:9px 16px; font-size:11.5px; letter-spacing:.3px;
+    border-radius:5px; cursor:pointer; font-weight:700;
+  }
+  button:hover{ background:#254E88; }
+  button.ghost{ background:#fff; color:var(--blue); border:1.3px solid var(--blue); }
+  button.ghost:hover{ background:var(--blue-tint); }
+  button.export{ background:var(--teal); }
+  button.export:hover{ background:#0D5E57; }
+  button.live-publish{ background:var(--green); }
+  button.live-publish:hover{ background:#245F3F; }
+  #fileInput{ display:none; }
+  .err{
+    border:1.5px solid var(--red); background:#F9EAEA; color:#6E2626; padding:12px 16px;
+    font-size:12px; margin-bottom:20px; display:none; border-radius:8px;
+  }
+  .err.show{ display:block; }
+
+  .live-panel{
+    background:var(--paper); border:1px solid var(--line); border-radius:8px;
+    padding:12px 16px; margin-bottom:16px; box-shadow:0 1px 3px rgba(20,40,70,.05);
+  }
+  .live-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .live-label{ font-size:10.5px; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-mute); font-weight:700; white-space:nowrap; }
+  #apiUrlInput{
+    flex:1; min-width:220px; font-family:Arial, sans-serif; font-size:12px; padding:8px 10px;
+    border:1.3px solid var(--line); border-radius:5px; color:var(--ink);
+  }
+  .live-status{ font-size:11px; color:var(--ink-mute); white-space:nowrap; }
+  .live-status.ok{ color:var(--green); font-weight:700; }
+  .live-status.err{ color:var(--red); font-weight:700; }
+
+  .store-banner{
+    background:var(--navy); color:#fff; padding:10px 16px; border-radius:8px;
+    margin-bottom:16px; font-size:12.5px; font-weight:700; letter-spacing:.2px;
+  }
+  .store-banner .sub{ font-weight:400; color:#A9BEDA; font-size:11px; margin-top:2px; }
+
+  #dashboard{ display:none; }
+
+  .kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:26px; }
+  .kpi{
+    background:var(--blue-tint); border-radius:8px; padding:15px 16px; border-left:4px solid var(--blue);
+    box-shadow:0 1px 3px rgba(20,40,70,.06); transition:box-shadow .15s ease;
+  }
+  .kpi:hover{ box-shadow:0 3px 10px rgba(20,40,70,.1); }
+  .kpi.c-orange{ border-left-color:var(--orange); background:var(--orange-tint); }
+  .kpi.c-red{ border-left-color:var(--red); background:var(--red-tint); }
+  .kpi.c-teal{ border-left-color:var(--teal); background:var(--teal-tint); }
+  .kpi .label{ font-size:10.5px; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:8px; font-weight:700; }
+  .kpi .value{ font-size:26px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1; color:var(--navy); }
+  .kpi.c-red .value{ color:var(--red); }
+  .kpi .sub{ font-size:10.5px; color:var(--ink-soft); margin-top:4px; }
+
+  .sec-head{ display:flex; justify-content:space-between; align-items:baseline; margin:32px 0 14px; }
+  .sec-head h2{ font-size:15px; margin:0; font-weight:700; color:var(--navy); }
+  .sec-head .n{ font-size:11.5px; color:var(--ink-mute); }
+
+  .slicers{
+    display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:16px;
+    border-radius:10px; padding:16px; margin-bottom:8px; background:var(--paper);
+    box-shadow:0 1px 4px rgba(20,40,70,.06);
+  }
+  .slicer .label{ font-size:10.5px; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-mute); margin-bottom:6px; font-weight:700; }
+  .chip-list{ display:flex; flex-wrap:wrap; gap:6px; max-height:96px; overflow-y:auto; }
+  .chip{
+    font-size:11.5px; padding:5px 11px; border:1.5px solid var(--line); background:#fff; border-radius:14px;
+    cursor:pointer; user-select:none; white-space:nowrap; color:var(--ink-soft);
+  }
+  .chip.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
+  select{
+    width:100%; font-family:Arial, sans-serif; font-size:12px; padding:8px; border:1.5px solid var(--line);
+    background:#fff; color:var(--ink); border-radius:6px;
+  }
+  .reset-row{ text-align:right; margin:10px 0 4px; }
+
+  .tabs{ display:flex; gap:8px; margin-bottom:22px; border-bottom:2px solid var(--line); }
+  .tab-btn{
+    background:transparent; color:var(--ink-soft); border:none; border-radius:0;
+    padding:10px 4px; margin-right:20px; font-weight:700; font-size:12.5px; letter-spacing:.3px;
+    border-bottom:3px solid transparent; text-transform:none;
+  }
+  .tab-btn:hover{ background:transparent; color:var(--navy); }
+  .tab-btn.active{ color:var(--navy); border-bottom-color:var(--blue); }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  #summaryTablePD th, #summaryTablePR th{ }
+
+  .chart-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:8px; }
+  .chart-card{
+    background:var(--paper); border-radius:10px; padding:16px 18px 12px;
+    box-shadow:0 1px 4px rgba(20,40,70,.08);
+  }
+  .chart-card h3{ font-size:13px; margin:0 0 12px; font-weight:700; color:var(--navy); }
+  .chart-wrap{ position:relative; height:260px; }
+  .chart-wrap.tall{ height:320px; }
+
+  .table-section{ margin-bottom:8px; }
+  .table-head-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .table-wrap{ background:var(--paper); border-radius:10px; max-height:420px; overflow-y:auto; box-shadow:0 1px 4px rgba(20,40,70,.08); }
+  table{ width:100%; border-collapse:collapse; font-size:11.5px; }
+  thead th{
+    position:sticky; top:0; background:var(--navy); color:#fff; text-align:left;
+    padding:9px 10px; font-size:10px; letter-spacing:.4px; text-transform:uppercase; cursor:pointer;
+  }
+  thead th:hover{ background:var(--navy-deep); }
+  tbody td{ padding:7px 10px; border-bottom:1px solid #eef1f5; white-space:nowrap; }
+  tbody tr:nth-child(even){ background:#F8FAFD; }
+  tbody tr.crit{ background:#FDECE5; }
+  tbody tr.crit td{ font-weight:700; color:#8A2E12; }
+  .table-foot{ font-size:10.5px; color:var(--ink-mute); padding:8px 4px; }
+  .remark-input{
+    width:180px; font-family:Arial, sans-serif; font-size:11px; padding:5px 7px;
+    border:1.3px solid var(--line); border-radius:5px; background:#FFFDF5;
+  }
+  .remark-input:focus{ outline:none; border-color:var(--blue); background:#fff; }
+
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:#c7d2e0; border-radius:4px; }
+
+  @media print{
+    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+    body{ background:#fff; }
+    .upload-box{ display:none !important; }
+    .tabs{ display:none !important; }
+    .tab-panel{ display:block !important; }
+    button{ display:none !important; }
+    .table-head-row{ min-height:0; }
+    .table-wrap{ max-height:none !important; overflow:visible !important; box-shadow:none; }
+    .chart-card, .kpi, .table-section, .slicers{ break-inside:avoid; }
+    .chart-wrap, .chart-wrap.tall{ height:220px !important; }
+    thead th{ position:static; }
+    .remark-input{ border:none; background:none; padding:2px 0; width:auto; }
+  }
+</style>
+</head>
+<body>
+<script id="embeddedData" type="application/json">null</script>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <p class="eyebrow">Sapphire Retail Limited — Retail Compliance</p>
+      <h1>Transfer Order Aging Dashboard</h1>
+    </div>
+    <div class="meta" id="metaBlock">
+      <div>Source: —</div>
+      <div>Generated: —</div>
+      <div class="badge" id="recordCountTop">0 records loaded</div>
+    </div>
+  </div>
+
+  <div class="live-panel" id="livePanel">
+    <div class="live-row">
+      <span class="live-label">Live data source</span>
+      <input type="text" id="apiUrlInput" placeholder="Paste your Apps Script Web App URL (ends in /exec)">
+      <button class="ghost" onclick="connectLive()">Connect</button>
+      <button class="ghost" onclick="fetchLiveData(true)">Refresh</button>
+      <span class="live-status" id="liveStatus">Not connected — showing local upload mode.</span>
+    </div>
+  </div>
+
+  <div class="store-banner" id="storeBanner" style="display:none;"></div>
+
+  <div class="upload-box" id="uploadBox">
+    <p><strong>Upload the Transfer Order workbook</strong> — must contain a "Transfer Data Sheet" and a "Node Master" sheet, same layout as the compliance dashboard export.</p>
+    <button onclick="document.getElementById('fileInput').click()">Choose file</button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" />
+    <div class="req">Required columns — Transfer Data Sheet: Transfer number, Transfer status, From warehouse, To warehouse, Ship Date, Receipt Date, TO Qty, Ship Qty, Recvd. Qty, Created date and time. Node Master: Code, Node Name, Region, Node Type, Cluster Manager Name, Region Division.</div>
+  </div>
+  <div class="err" id="errBox"></div>
+
+  <div id="dashboard">
+
+    <div class="upload-box compact" id="adminToolbar">
+      <span id="loadedFileName" style="font-size:12px; color:var(--navy); font-weight:700;"></span>
+      <span>
+        <button class="ghost" onclick="document.getElementById('fileInput').click()">Replace file</button>
+        <button class="live-publish" id="publishBtn" onclick="publishToLive()" style="display:none;">Publish to live dashboard</button>
+      </span>
+    </div>
+
+    <div class="tabs" id="tabsBar">
+      <button class="tab-btn active" data-tab="dash" onclick="showTab('dash')">Dashboard</button>
+      <button class="tab-btn" data-tab="summary" onclick="showTab('summary')">Cluster Manager Summary</button>
+    </div>
+
+    <div id="tabDash" class="tab-panel active">
+
+    <div class="kpis" id="kpiRow"></div>
+
+    <div id="adminOnlySection">
+    <div class="sec-head"><h2>Filters</h2><span class="n" id="filteredCount"></span></div>
+    <div class="slicers">
+      <div class="slicer">
+        <div class="label">Region</div>
+        <div class="chip-list" id="regionChips"></div>
+      </div>
+      <div class="slicer">
+        <div class="label">Cluster manager</div>
+        <div class="chip-list" id="cmChips"></div>
+      </div>
+      <div class="slicer">
+        <div class="label">Age slab</div>
+        <div class="chip-list" id="slabChips"></div>
+      </div>
+    </div>
+    <div class="reset-row"><button class="ghost" onclick="resetFilters()">Reset filters</button></div>
+
+    <div class="sec-head"><h2>Visuals</h2><span class="n">Reflects current filter selection</span></div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Pending TOs by region</h3>
+        <div class="chart-wrap"><canvas id="regionChart" role="img" aria-label="Grouped bar chart of pending dispatch and receiving counts by region"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Age slab distribution</h3>
+        <div class="chart-wrap"><canvas id="slabChart" role="img" aria-label="Bar chart of TO counts by age slab"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Pending dispatch by cluster manager</h3>
+        <div class="chart-wrap tall"><canvas id="cmDispatchChart" role="img" aria-label="Horizontal bar chart of pending dispatch count by cluster manager"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Pending receiving by cluster manager</h3>
+        <div class="chart-wrap tall"><canvas id="cmReceivingChart" role="img" aria-label="Horizontal bar chart of pending receiving count by cluster manager"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Top 10 pending dispatch stores (excl. 0-2 days)</h3>
+        <div class="chart-wrap tall"><canvas id="top10DispatchChart" role="img" aria-label="Horizontal bar chart of top 10 stores by pending dispatch count, excluding 0-2 day aging"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Top 10 pending receiving stores (excl. 0-2 days)</h3>
+        <div class="chart-wrap tall"><canvas id="top10ReceivingChart" role="img" aria-label="Horizontal bar chart of top 10 stores by pending receiving count, excluding 0-2 day aging"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sec-head"><h2>Route mix</h2><span class="n">From node type to node type</span></div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Pending dispatch — route mix</h3>
+        <table id="routeTablePD"><thead><tr><th>Route</th><th>Count</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="chart-card">
+        <h3>Pending receiving — route mix</h3>
+        <table id="routeTablePR"><thead><tr><th>Route</th><th>Count</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+    </div><!-- /adminOnlySection -->
+
+    <div class="table-section">
+      <div class="sec-head"><h2>Pending dispatch — line detail</h2><span class="n" id="pdTableCount"></span></div>
+      <div class="table-head-row">
+        <span></span>
+        <span>
+          <button class="ghost" onclick="document.getElementById('importRemarksInput').click()">Import remarks CSV</button>
+          <button class="export" onclick="exportCSV('pd')">Export CSV</button>
+        </span>
+      </div>
+      <div class="table-wrap">
+        <table id="pdTable">
+          <thead><tr>
+            <th data-k="transfer">Transfer no</th><th data-k="store">Store</th><th data-k="region">Region</th>
+            <th data-k="route">Route</th><th data-k="cm">Cluster manager</th><th data-k="qty">Pending qty</th>
+            <th data-k="date">Created date</th><th data-k="age">Age (days)</th><th data-k="slab">Age slab</th>
+            <th>Remarks</th>
+          </tr></thead>
+          <tbody id="pdTableBody"></tbody>
+        </table>
+      </div>
+      <div class="table-foot">Excludes TOs aged 0-2 days. Showing up to 500 rows sorted by current sort key. Export includes all filtered rows and remarks. Remarks auto-save to this browser as you type.</div>
+    </div>
+
+    <div class="table-section">
+      <div class="sec-head"><h2>Pending receiving — line detail</h2><span class="n" id="prTableCount"></span></div>
+      <div class="table-head-row">
+        <span></span>
+        <span>
+          <button class="ghost" onclick="document.getElementById('importRemarksInput').click()">Import remarks CSV</button>
+          <button class="export" onclick="exportCSV('pr')">Export CSV</button>
+        </span>
+      </div>
+      <div class="table-wrap">
+        <table id="prTable">
+          <thead><tr>
+            <th data-k="transfer">Transfer no</th><th data-k="store">Store</th><th data-k="region">Region</th>
+            <th data-k="route">Route</th><th data-k="cm">Cluster manager</th><th data-k="qty">Pending qty</th>
+            <th data-k="date">Ship date</th><th data-k="age">Age (days)</th><th data-k="slab">Age slab</th>
+            <th>Remarks</th>
+          </tr></thead>
+          <tbody id="prTableBody"></tbody>
+        </table>
+      </div>
+      <div class="table-foot">Excludes TOs aged 0-2 days. Showing up to 500 rows sorted by current sort key. Export includes all filtered rows and remarks. Remarks auto-save to this browser as you type.</div>
+    </div>
+
+    <input type="file" id="importRemarksInput" accept=".csv" style="display:none;" />
+
+    </div><!-- /tabDash -->
+
+    <div id="tabSummary" class="tab-panel">
+      <div class="sec-head"><h2>Cluster manager &times; store — pending dispatch</h2><span class="n">Excludes 0-2 day TOs. Largest to smallest by pending qty</span></div>
+      <div class="table-head-row"><span></span><button class="export" onclick="exportSummaryCSV('pd')">Export CSV</button></div>
+      <div class="table-wrap">
+        <table id="summaryTablePD"><thead><tr><th>Cluster manager</th><th>Store</th><th>Region</th><th>TO count</th><th>Pending qty</th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <div class="sec-head"><h2>Cluster manager &times; store — pending receiving</h2><span class="n">Excludes 0-2 day TOs. Largest to smallest by pending qty</span></div>
+      <div class="table-head-row"><span></span><button class="export" onclick="exportSummaryCSV('pr')">Export CSV</button></div>
+      <div class="table-wrap">
+        <table id="summaryTablePR"><thead><tr><th>Cluster manager</th><th>Store</th><th>Region</th><th>TO count</th><th>Pending qty</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
+Chart.defaults.font.family = 'Arial';
+
+let RAW = { pd: [], pr: [] };
+let FILTERS = { regions:new Set(), cms:new Set(), slabs:new Set() };
+let SORT_PD = { key:'age', dir:'desc' };
+let SORT_PR = { key:'age', dir:'desc' };
+let charts = {};
+let remarksMap = {};
+
+function loadRemarks(){
+  try{ remarksMap = JSON.parse(localStorage.getItem('to_dashboard_remarks') || '{}'); }
+  catch(e){ remarksMap = {}; }
+}
+function saveRemarks(){
+  try{ localStorage.setItem('to_dashboard_remarks', JSON.stringify(remarksMap)); }
+  catch(e){ /* storage unavailable — remarks still work for this session, just won't survive a reload */ }
+}
+loadRemarks();
+
+function updateRemark(el){
+  const tn = el.dataset.tn;
+  if(el.value && el.value.trim()!==''){ remarksMap[tn] = el.value; } else { delete remarksMap[tn]; }
+  saveRemarks();
+}
+
+// ---------------- Live data (Google Apps Script backend) ----------------
+// Paste your deployed Apps Script Web App URL (ends in /exec) below before
+// publishing this file to GitHub Pages — every visitor then connects
+// automatically, including store links (?store=CODE), with no manual setup.
+const HARDCODED_API_URL = 'https://script.google.com/macros/s/AKfycbzNF9rcpw7KQjkm8NfP5x1FCWLYOsSrZB9QKsyatJ2spgxmhre_BJ7Z_1j4xQXkVKiwFw/exec';
+
+let API_URL = HARDCODED_API_URL;
+try{ API_URL = localStorage.getItem('to_dashboard_api_url') || HARDCODED_API_URL; }catch(e){ API_URL = HARDCODED_API_URL; }
+
+// A URL like dashboard.html?store=S2012DML locks the whole page to that
+// store's own pending lines only, hides admin controls (upload, publish,
+// filters, charts, exports), and tags any remark that store submits with its
+// code so the backend can reject remarks aimed at a different store's TOs.
+let LOCKED_STORE = '';
+try{
+  const qs = new URLSearchParams(window.location.search);
+  LOCKED_STORE = (qs.get('store') || '').trim();
+}catch(e){ LOCKED_STORE = ''; }
+
+function enterStoreMode(){
+  document.getElementById('livePanel').style.display = 'none';
+  document.getElementById('adminToolbar').style.display = 'none';
+  document.getElementById('tabsBar').style.display = 'none';
+  document.getElementById('adminOnlySection').style.display = 'none';
+  const banner = document.getElementById('storeBanner');
+  banner.style.display = 'block';
+  banner.innerHTML = 'Store view — ' + LOCKED_STORE +
+    '<div class="sub">Showing only this store\'s pending transfer orders. Add remarks against your own lines below.</div>';
+}
+
+function getSubmitterName(){
+  let name = '';
+  try{ name = localStorage.getItem('to_dashboard_submitter_name') || ''; }catch(e){}
+  if(!name){
+    name = prompt('Your name (shown against remarks you submit):') || '';
+    try{ localStorage.setItem('to_dashboard_submitter_name', name); }catch(e){}
+  }
+  return name;
+}
+
+function setLiveStatus(text, cls){
+  const el = document.getElementById('liveStatus');
+  if(!el) return;
+  el.textContent = text;
+  el.className = 'live-status' + (cls ? ' '+cls : '');
+}
+
+function connectLive(){
+  const val = (document.getElementById('apiUrlInput').value || '').trim();
+  if(!val){ setLiveStatus('Enter a Web App URL first.', 'err'); return; }
+  API_URL = val;
+  try{ localStorage.setItem('to_dashboard_api_url', API_URL); }catch(e){}
+  fetchLiveData(true);
+}
+
+function toApiRow(r){
+  return {
+    Flow: r.flow, TransferNo: r.transfer||'', StoreCode: r.store, StoreName: r.storeName||'',
+    Region: r.region, SubRegion: r.div, Route: r.route, ClusterManager: r.cm,
+    PendingQty: r.qty||0, DrivingDate: r.drivingDate ? fmtDate(r.drivingDate) : '',
+    AgeDays: r.age==null ? '' : r.age, AgeSlab: r.slab
+  };
+}
+
+function fromApiRow(o){
+  const reviveDate = s => {
+    if(!s) return null;
+    const parts = String(s).split('-').map(Number);
+    if(parts.length!==3 || parts.some(isNaN)) return null;
+    return new Date(parts[0], parts[1]-1, parts[2]);
+  };
+  return {
+    flow: o.Flow, transfer: o.TransferNo, store: o.StoreCode, storeName: o.StoreName,
+    region: o.Region, div: o.SubRegion, route: o.Route, cm: o.ClusterManager,
+    qty: Number(o.PendingQty)||0, drivingDate: reviveDate(o.DrivingDate),
+    age: (o.AgeDays==='' || o.AgeDays==null) ? null : Number(o.AgeDays), slab: o.AgeSlab,
+    _remark: o.Remark || ''
+  };
+}
+
+function fetchLiveData(userInitiated){
+  if(!API_URL){ setLiveStatus('Not connected — showing local upload mode.'); return; }
+  document.getElementById('apiUrlInput').value = API_URL;
+  setLiveStatus('Loading live data…');
+  fetch(API_URL + '?action=getData')
+    .then(r => r.json())
+    .then(data => {
+      const rows = (data.rows||[]).map(fromApiRow);
+      RAW.pd = rows.filter(r=>r.flow==='Pending Dispatch');
+      RAW.pr = rows.filter(r=>r.flow==='Pending Receiving');
+      rows.forEach(r=>{ if(r._remark){ remarksMap[r.transfer] = r._remark; } });
+      saveRemarks();
+      const genDate = data.lastUpdated ? new Date(data.lastUpdated) : new Date();
+      activateDashboard('Live dashboard', 0, genDate);
+      const badge = document.getElementById('recordCountTop');
+      if(badge) badge.textContent = (RAW.pd.length+RAW.pr.length) + ' pending lines — live, last published ' + genDate.toLocaleString();
+      setLiveStatus('Connected — ' + rows.length + ' lines loaded.', 'ok');
+    })
+    .catch(err => {
+      setLiveStatus('Could not reach that URL — check it\'s deployed with "Anyone" access.', 'err');
+      if(userInitiated) console.error('fetchLiveData error', err);
+    });
+}
+
+function publishToLive(){
+  if(!API_URL){ alert('Connect a live data source first (top of the page) before publishing.'); return; }
+  if(!RAW.pd.length && !RAW.pr.length){ alert('Upload a workbook first — nothing to publish yet.'); return; }
+  const rows = RAW.pd.concat(RAW.pr).map(toApiRow);
+  setLiveStatus('Publishing…');
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'uploadData', rows }) })
+    .then(r => r.json())
+    .then(res => {
+      if(res.success){ setLiveStatus('Published ' + res.count + ' lines live.', 'ok'); }
+      else{ setLiveStatus('Publish failed: ' + (res.message||'unknown error'), 'err'); }
+    })
+    .catch(err => { setLiveStatus('Publish failed — network or URL error.', 'err'); console.error('publishToLive error', err); });
+}
+
+function submitRemarkToLive(el){
+  if(!API_URL) return;
+  const tn = el.dataset.tn;
+  const value = el.value;
+  const submittedBy = LOCKED_STORE ? ('Store ' + LOCKED_STORE) : getSubmitterName();
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'submitRemark', transferNo:tn, remark:value, submittedBy, storeCode: LOCKED_STORE || undefined }) })
+    .then(r => r.json())
+    .then(res => {
+      if(!res.success){
+        console.warn('Remark submit failed', res);
+        if(LOCKED_STORE) alert('Could not save that remark: ' + (res.message||'rejected by server') + '. This usually means this transfer order does not belong to your store.');
+      }
+    })
+    .catch(err => console.warn('Remark submit error', err));
+}
+
+// Minimal CSV line parser handling quoted fields with embedded commas/quotes.
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c==='"'){
+        if(text[i+1]==='"'){ field+='"'; i++; } else { inQuotes=false; }
+      } else { field += c; }
+    } else {
+      if(c==='"'){ inQuotes = true; }
+      else if(c===','){ row.push(field); field=''; }
+      else if(c==='\n' || c==='\r'){
+        if(field!=='' || row.length){ row.push(field); rows.push(row); row=[]; field=''; }
+        if(c==='\r' && text[i+1]==='\n') i++;
+      } else { field += c; }
+    }
+  }
+  if(field!=='' || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+document.getElementById('importRemarksInput').addEventListener('change', function(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const rows = parseCSV(ev.target.result);
+    if(!rows.length) return;
+    const header = rows[0].map(h=>h.trim());
+    const tnIdx = header.indexOf('Transfer No');
+    const remIdx = header.indexOf('Remarks');
+    if(tnIdx===-1 || remIdx===-1){
+      alert('This CSV does not have "Transfer No" and "Remarks" columns — import expects a file exported from this dashboard.');
+      return;
+    }
+    let merged = 0;
+    for(let i=1;i<rows.length;i++){
+      const r = rows[i];
+      const tn = (r[tnIdx]||'').trim();
+      const rem = (r[remIdx]||'').trim();
+      if(tn && rem){ remarksMap[tn] = rem; merged++; }
+    }
+    saveRemarks();
+    applyFilters();
+    alert('Merged remarks for ' + merged + ' transfer order(s).');
+  };
+  reader.readAsText(f);
+  e.target.value = '';
+});
+
+function pktToday(){
+  const now = new Date();
+  const utcMs = now.getTime() + now.getTimezoneOffset()*60000;
+  const pkt = new Date(utcMs + 5*3600000);
+  return new Date(pkt.getFullYear(), pkt.getMonth(), pkt.getDate());
+}
+function stripTimeBuffered(d){
+  // For DATE-ONLY Excel cells (e.g. Ship Date, always stored at midnight):
+  // SheetJS's serial-to-Date conversion can drift by a few seconds either side
+  // of true midnight (floating-point precision), enough to land on the wrong
+  // calendar day when read directly. Buffer by 12h before truncating so that
+  // drift never flips the date. Do NOT use this on columns with a real
+  // time-of-day component — see stripTimeExact.
+  const buffered = new Date(d.getTime() + 12*3600000);
+  return new Date(buffered.getFullYear(), buffered.getMonth(), buffered.getDate());
+}
+function stripTimeExact(d){
+  // For columns with a genuine time-of-day (e.g. Created date and time, which
+  // carries real timestamps like 15:56:57 — not just midnight): truncate
+  // directly with no buffer. Adding a 12h buffer here would push any
+  // afternoon/evening timestamp into the next calendar day.
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function daysBetween(a,b){ return Math.round((a-b)/86400000); }
+function shiftWeekendToMonday(d){
+  const day = d.getDay();
+  if(day===6) return new Date(d.getFullYear(), d.getMonth(), d.getDate()+2);
+  if(day===0) return new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
+  return d;
+}
+function ageSlab(age){
+  if(age==null) return 'No Date';
+  if(age<=2) return '0-2 Days';
+  if(age<=5) return '3-5 Days';
+  if(age<=10) return '6-10 Days';
+  return '10+ Days';
+}
+function excelDate(v){
+  if(v==null || v==='') return null;
+  if(v instanceof Date) return v;
+  if(typeof v==='number') return new Date(Math.round((v-25569)*86400000));
+  const d = new Date(v);
+  return isNaN(d) ? null : d;
+}
+function fmtDate(d){
+  if(!d) return '—';
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+document.getElementById('fileInput').addEventListener('change', function(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
+      processWorkbook(wb, f.name);
+    }catch(err){
+      showError('Could not read this file — ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(f);
+});
+
+function showError(msg){
+  const box = document.getElementById('errBox');
+  box.textContent = msg;
+  box.classList.add('show');
+  document.getElementById('dashboard').style.display = 'none';
+}
+function clearError(){ document.getElementById('errBox').classList.remove('show'); }
+
+function processWorkbook(wb, fname){
+  clearError();
+  if(!wb.SheetNames.includes('Transfer Data Sheet') || !wb.SheetNames.includes('Node Master')){
+    const missing = [];
+    if(!wb.SheetNames.includes('Transfer Data Sheet')) missing.push('Transfer Data Sheet');
+    if(!wb.SheetNames.includes('Node Master')) missing.push('Node Master');
+    showError('Workbook is missing required sheet(s): ' + missing.join(', '));
+    return;
+  }
+  const dataRows = XLSX.utils.sheet_to_json(wb.Sheets['Transfer Data Sheet'], {defval:null});
+  const nodeRows = XLSX.utils.sheet_to_json(wb.Sheets['Node Master'], {defval:null});
+
+  const dataReq = ['Transfer number','Transfer status','From warehouse','To warehouse','Ship Date','Receipt Date','TO Qty','Ship Qty','Recvd. Qty','Created date and time'];
+  const nodeReq = ['Code','Node Name','Region','Node Type','Cluster Manager Name','Region Division'];
+  const dataHeaders = dataRows.length ? Object.keys(dataRows[0]) : [];
+  const nodeHeaders = nodeRows.length ? Object.keys(nodeRows[0]) : [];
+  const missD = dataReq.filter(h=>!dataHeaders.includes(h));
+  const missN = nodeReq.filter(h=>!nodeHeaders.includes(h));
+  if(missD.length || missN.length){
+    let msg = '';
+    if(missD.length) msg += 'Transfer Data Sheet missing: ' + missD.join(', ') + '. ';
+    if(missN.length) msg += 'Node Master missing: ' + missN.join(', ') + '.';
+    showError(msg);
+    return;
+  }
+
+  const nodeMap = {};
+  nodeRows.forEach(r=>{
+    nodeMap[String(r['Code']).trim()] = {
+      name: r['Node Name'], region: r['Region'] || 'Unassigned',
+      type: r['Node Type'] || 'Other',
+      cm: (r['Cluster Manager Name'] && r['Cluster Manager Name'] !== '-') ? r['Cluster Manager Name'] : 'Unassigned',
+      div: r['Region Division'] || 'Unassigned'
+    };
+  });
+
+  const today = pktToday();
+  const pd = [], pr = [];
+
+  dataRows.forEach(row=>{
+    const fromCode = row['From warehouse'] != null ? String(row['From warehouse']).trim() : '';
+    const toCode = row['To warehouse'] != null ? String(row['To warehouse']).trim() : '';
+    const fromNode = nodeMap[fromCode];
+    const toNode = nodeMap[toCode];
+    const status = (row['Transfer status']||'').toString().trim();
+    const toQty = Number(row['TO Qty'])||0;
+    const shipQty = Number(row['Ship Qty'])||0;
+    const recvQty = Number(row['Recvd. Qty'])||0;
+
+    const routeOf = (fn, tn) => {
+      const fLabel = fn && fn.type === 'Stores' ? 'Store' : (fn ? fn.type : 'Unknown');
+      const tLabel = tn && tn.type === 'Stores' ? 'Store' : (tn ? tn.type : 'Unknown');
+      return fLabel + ' to ' + tLabel;
+    };
+
+    if(fromNode && fromNode.type === 'Stores' && status === 'Created' && !row['Ship Date']){
+      let createdRaw = excelDate(row['Created date and time']);
+      let age = null, slab = 'No Date', drivingDate = null;
+      if(createdRaw){
+        let d = stripTimeExact(createdRaw);
+        d = shiftWeekendToMonday(d);
+        drivingDate = d;
+        age = Math.max(0, daysBetween(today, d));
+        slab = ageSlab(age);
+      }
+      pd.push({
+        transfer: row['Transfer number'], store: fromCode, storeName: fromNode.name,
+        region: fromNode.region, cm: fromNode.cm, div: fromNode.div,
+        route: routeOf(fromNode, toNode), qty: toQty - shipQty,
+        drivingDate, age, slab, flow:'Pending Dispatch'
+      });
+    }
+    if(toNode && toNode.type === 'Stores' && status === 'Shipped' && !row['Receipt Date']){
+      let shipRaw = excelDate(row['Ship Date']);
+      let age = null, slab = 'No Date', drivingDate = null;
+      if(shipRaw){
+        const d = stripTimeBuffered(shipRaw);
+        drivingDate = d;
+        age = daysBetween(today, d);
+        slab = ageSlab(age);
+      }
+      pr.push({
+        transfer: row['Transfer number'], store: toCode, storeName: toNode.name,
+        region: toNode.region, cm: toNode.cm, div: toNode.div,
+        route: routeOf(fromNode, toNode), qty: shipQty - recvQty,
+        drivingDate, age, slab, flow:'Pending Receiving'
+      });
+    }
+  });
+
+  RAW.pd = pd; RAW.pr = pr;
+  activateDashboard(fname, dataRows.length, today);
+}
+
+function activateDashboard(fname, scannedCount, today){
+  document.getElementById('metaBlock').innerHTML =
+    '<div>Source: ' + fname + '</div><div>Generated: ' + today.toDateString() + ' (PKT)</div>'+
+    '<div class="badge" id="recordCountTop">' + scannedCount.toLocaleString() + ' TO lines scanned &middot; ' + (RAW.pd.length+RAW.pr.length) + ' pending</div>';
+  document.getElementById('loadedFileName').textContent = fname + ' — ' + (RAW.pd.length+RAW.pr.length) + ' pending lines';
+  document.getElementById('uploadBox').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  const pubBtn = document.getElementById('publishBtn');
+  if(pubBtn) pubBtn.style.display = API_URL ? 'inline-block' : 'none';
+
+  buildSlicers();
+  applyFilters();
+}
+
+function buildWorkbookFromSheets(sheets){
+  const wb = XLSX.utils.book_new();
+  sheets.forEach(sd=>{
+    const aoa = [sd.headers, ...sd.rows];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:sd.rows.length, c:sd.headers.length-1}}) };
+    ws['!cols'] = sd.headers.map(()=>({wch:16}));
+    XLSX.utils.book_append_sheet(wb, ws, sd.name);
+  });
+  return wb;
+}
+
+function exportDashboardExcel(){
+  if(!RAW.pd.length && !RAW.pr.length){ alert('Upload a workbook first — nothing loaded to export yet.'); return; }
+  const headers = ['Transfer No','Store Code','Store Name','Region','Sub Region','Route','Cluster Manager','Pending Qty','Driving Date','Age (Days)','Age Slab','Remarks'];
+  const toRow = r => [
+    r.transfer||'', r.store, r.storeName||'', r.region, r.div, r.route, r.cm,
+    r.qty||0, r.drivingDate?fmtDate(r.drivingDate):'', r.age==null?'':r.age, r.slab, remarksMap[r.transfer||'']||''
+  ];
+  const wb = buildWorkbookFromSheets([
+    { name:'Pending Dispatch', headers, rows:(window._export_pd||[]).map(toRow) },
+    { name:'Pending Receiving', headers, rows:(window._export_pr||[]).map(toRow) }
+  ]);
+  XLSX.writeFile(wb, 'TO_Dashboard_' + new Date().toISOString().slice(0,10) + '.xlsx');
+}
+
+function exportClusterManagerExcel(){
+  if(!RAW.pd.length && !RAW.pr.length){ alert('Upload a workbook first — nothing loaded to export yet.'); return; }
+  const headers = ['Cluster Manager','Store Code','Store Name','Region','TO Count','Pending Qty'];
+  const toRow = l => [l.cm, l.store, l.name||'', l.region, l.count, l.qty];
+  const wb = buildWorkbookFromSheets([
+    { name:'Pending Dispatch', headers, rows:(window._summary_pd||[]).map(toRow) },
+    { name:'Pending Receiving', headers, rows:(window._summary_pr||[]).map(toRow) }
+  ]);
+  XLSX.writeFile(wb, 'TO_Cluster_Manager_Summary_' + new Date().toISOString().slice(0,10) + '.xlsx');
+}
+
+function generateSnapshot(){
+  if(!RAW.pd.length && !RAW.pr.length){ alert('Upload a workbook first — nothing loaded to snapshot yet.'); return; }
+  // Serialize drivingDate as a plain Y-M-D string (not ISO/UTC) so the snapshot
+  // shows the same calendar date no matter what timezone it's later opened in.
+  const toPlain = r => ({...r, drivingDate: r.drivingDate ? fmtDate(r.drivingDate) : null});
+  const payload = {
+    fname: document.getElementById('loadedFileName').textContent || 'Uploaded workbook',
+    generatedAt: new Date().toISOString(),
+    pd: RAW.pd.map(toPlain),
+    pr: RAW.pr.map(toPlain),
+    remarks: remarksMap
+  };
+  const clone = document.documentElement.cloneNode(true);
+  const embEl = clone.querySelector('#embeddedData');
+  embEl.textContent = JSON.stringify(payload);
+  const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+  const blob = new Blob([html], {type:'text/html;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const stamp = new Date().toISOString().slice(0,10);
+  a.download = 'TO_Aging_Dashboard_Snapshot_' + stamp + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function loadFromEmbedded(payload){
+  // drivingDate arrives as a plain 'YYYY-MM-DD' string — parse its components
+  // directly rather than via `new Date(string)`, which would reinterpret a
+  // date-only string as UTC midnight and can shift the day depending on the
+  // viewer's local timezone.
+  const reviveDate = s => {
+    if(!s) return null;
+    const [y,m,d] = s.split('-').map(Number);
+    return new Date(y, m-1, d);
+  };
+  RAW.pd = (payload.pd||[]).map(r=>({...r, drivingDate: reviveDate(r.drivingDate)}));
+  RAW.pr = (payload.pr||[]).map(r=>({...r, drivingDate: reviveDate(r.drivingDate)}));
+  if(payload.remarks){ Object.assign(remarksMap, payload.remarks); saveRemarks(); }
+  const genDate = payload.generatedAt ? new Date(payload.generatedAt) : new Date();
+  activateDashboard((payload.fname||'Shared snapshot') + ' (snapshot)', 0, genDate);
+  const badge = document.getElementById('recordCountTop');
+  if(badge) badge.textContent = (RAW.pd.length+RAW.pr.length) + ' pending lines — static snapshot, generated ' + genDate.toDateString();
+}
+
+(function initFromEmbedded(){
+  if(LOCKED_STORE) enterStoreMode();
+
+  const urlInput = document.getElementById('apiUrlInput');
+  if(urlInput && API_URL) urlInput.value = API_URL;
+
+  if(LOCKED_STORE){
+    // A store link only ever makes sense against live data — there's no
+    // local upload path in store mode, so don't fall through to a snapshot.
+    if(API_URL) fetchLiveData(false);
+    else{
+      document.getElementById('errBox').textContent = 'This store link has no live data source configured yet — ask compliance to finish setting up the live dashboard.';
+      document.getElementById('errBox').classList.add('show');
+    }
+    return;
+  }
+
+  const el = document.getElementById('embeddedData');
+  const raw = el ? el.textContent.trim() : '';
+  if(raw && raw !== 'null'){
+    try{ loadFromEmbedded(JSON.parse(raw)); return; }
+    catch(e){ console.error('Failed to load embedded snapshot data', e); }
+  }
+  // No baked-in snapshot data — fall back to live data if a source is configured.
+  if(API_URL) fetchLiveData(false);
+})();
+
+function buildSlicers(){
+  const all = RAW.pd.concat(RAW.pr);
+  const regions = [...new Set(all.map(r=>r.region))].sort();
+  const cms = [...new Set(all.map(r=>r.cm))].sort();
+
+  document.getElementById('regionChips').innerHTML = regions.map(r=>
+    '<div class="chip" data-region="'+r+'">'+r+'</div>').join('');
+  document.querySelectorAll('#regionChips .chip').forEach(c=>c.onclick=()=>{
+    const r = c.dataset.region;
+    if(FILTERS.regions.has(r)) FILTERS.regions.delete(r); else FILTERS.regions.add(r);
+    applyFilters();
+  });
+
+  document.getElementById('cmChips').innerHTML = cms.map(c=>
+    '<div class="chip" data-cm="'+c+'">'+c+'</div>').join('');
+  document.querySelectorAll('#cmChips .chip').forEach(c=>c.onclick=()=>{
+    const m = c.dataset.cm;
+    if(FILTERS.cms.has(m)) FILTERS.cms.delete(m); else FILTERS.cms.add(m);
+    applyFilters();
+  });
+
+  document.getElementById('slabChips').innerHTML = ['0-2 Days','3-5 Days','6-10 Days','10+ Days'].map(s=>
+    '<div class="chip" data-slab="'+s+'">'+s+'</div>').join('');
+  document.querySelectorAll('#slabChips .chip').forEach(c=>c.onclick=()=>{
+    const s = c.dataset.slab;
+    if(FILTERS.slabs.has(s)) FILTERS.slabs.delete(s); else FILTERS.slabs.add(s);
+    applyFilters();
+  });
+
+  document.querySelectorAll('#pdTable thead th').forEach(th=>th.onclick=()=>{
+    const k = th.dataset.k;
+    if(SORT_PD.key===k) SORT_PD.dir = SORT_PD.dir==='asc' ? 'desc' : 'asc'; else { SORT_PD.key=k; SORT_PD.dir='desc'; }
+    applyFilters();
+  });
+  document.querySelectorAll('#prTable thead th').forEach(th=>th.onclick=()=>{
+    const k = th.dataset.k;
+    if(SORT_PR.key===k) SORT_PR.dir = SORT_PR.dir==='asc' ? 'desc' : 'asc'; else { SORT_PR.key=k; SORT_PR.dir='desc'; }
+    applyFilters();
+  });
+}
+
+function resetFilters(){
+  FILTERS = { regions:new Set(), cms:new Set(), slabs:new Set() };
+  buildSlicers();
+  applyFilters();
+}
+
+function showTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.getElementById('tabDash').classList.toggle('active', tab==='dash');
+  document.getElementById('tabSummary').classList.toggle('active', tab==='summary');
+}
+
+function passesFilters(r){
+  if(LOCKED_STORE && String(r.store||'').toUpperCase()!==LOCKED_STORE.toUpperCase()) return false;
+  if(FILTERS.regions.size && !FILTERS.regions.has(r.region)) return false;
+  if(FILTERS.cms.size && !FILTERS.cms.has(r.cm)) return false;
+  if(FILTERS.slabs.size && !FILTERS.slabs.has(r.slab)) return false;
+  return true;
+}
+
+function applyFilters(){
+  document.querySelectorAll('#regionChips .chip').forEach(c=>c.classList.toggle('active', FILTERS.regions.has(c.dataset.region)));
+  document.querySelectorAll('#cmChips .chip').forEach(c=>c.classList.toggle('active', FILTERS.cms.has(c.dataset.cm)));
+  document.querySelectorAll('#slabChips .chip').forEach(c=>c.classList.toggle('active', FILTERS.slabs.has(c.dataset.slab)));
+
+  const pd = RAW.pd.filter(passesFilters);
+  const pr = RAW.pr.filter(passesFilters);
+  const all = pd.concat(pr);
+
+  document.getElementById('filteredCount').textContent = all.length.toLocaleString() + ' of ' + (RAW.pd.length+RAW.pr.length).toLocaleString() + ' pending lines';
+
+  renderKPIs(pd, pr);
+  renderRegionChart(pd, pr);
+  renderSlabChart(pd, pr);
+  renderCmCharts(pd, pr);
+  renderTop10Charts(pd, pr);
+  renderRouteTables(pd, pr);
+  // Line-level detail and the cluster manager summary intentionally exclude
+  // fresh 0-2 day TOs — those aren't actionable yet, so they'd just be noise
+  // in a list meant for follow-up.
+  renderTable('pd', pd.filter(r=>r.slab!=='0-2 Days'));
+  renderTable('pr', pr.filter(r=>r.slab!=='0-2 Days'));
+  renderSummaryTables(RAW.pd.filter(r=>r.slab!=='0-2 Days'), RAW.pr.filter(r=>r.slab!=='0-2 Days'));
+}
+
+function sum(arr, f){ return arr.reduce((s,r)=>s+(f(r)||0),0); }
+
+function renderKPIs(pd, pr){
+  const pdAge2 = pd.filter(r=>r.slab!=='0-2 Days');
+  const prAge2 = pr.filter(r=>r.slab!=='0-2 Days');
+  const pdOver10 = pd.filter(r=>r.age!=null && r.age>10).length;
+  const prOver10 = pr.filter(r=>r.age!=null && r.age>10).length;
+  const pdOver20 = pd.filter(r=>r.age!=null && r.age>20).length;
+  const prOver20 = pr.filter(r=>r.age!=null && r.age>20).length;
+  const pdOldest = Math.max(0, ...pd.map(r=>r.age||0));
+  const prOldest = Math.max(0, ...pr.map(r=>r.age||0));
+  const kpis = [
+    ['Pending dispatch TOs — aging 2+ days', pdAge2.length, 'excl. 0-2 day slab', ''],
+    ['Pending dispatch — aging 2+ days units', sum(pdAge2,r=>r.qty).toLocaleString(), 'pending qty', ''],
+    ['Pending dispatch TOs > 10 days', pdOver10, pdOver10>0?'flagged':'none', pdOver10>0?'c-red':''],
+    ['Oldest pending dispatch TO', pdOldest+'d', 'max age in view', 'c-teal'],
+
+    ['Pending receiving TOs — aging 2+ days', prAge2.length, 'excl. 0-2 day slab', 'c-orange'],
+    ['Pending receiving — aging 2+ days units', sum(prAge2,r=>r.qty).toLocaleString(), 'pending qty', 'c-orange'],
+    ['Pending receiving TOs > 10 days', prOver10, prOver10>0?'flagged':'none', prOver10>0?'c-red':''],
+    ['Oldest pending receiving TO', prOldest+'d', 'max age in view', 'c-teal'],
+
+    ['Pending dispatch TOs > 20 days', pdOver20, pdOver20>0?'flagged':'none', pdOver20>0?'c-red':''],
+    ['Pending receiving TOs > 20 days', prOver20, prOver20>0?'flagged':'none', prOver20>0?'c-red':''],
+  ];
+  document.getElementById('kpiRow').innerHTML = kpis.map(([label,val,sub,cls])=>
+    '<div class="kpi '+cls+'"><div class="label">'+label+'</div><div class="value">'+val+'</div><div class="sub">'+sub+'</div></div>'
+  ).join('');
+}
+
+function destroy(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+const dlWhite = { color:'#fff', font:{weight:'bold', size:10}, anchor:'end', align:'start' };
+const dlDark = { color:'#16202B', font:{weight:'bold', size:10}, anchor:'end', align:'right', offset:4 };
+
+function renderRegionChart(pd, pr){
+  destroy('region');
+  const regions = [...new Set(pd.concat(pr).map(r=>r.region))].sort();
+  const pdCounts = regions.map(rg=>pd.filter(r=>r.region===rg).length);
+  const prCounts = regions.map(rg=>pr.filter(r=>r.region===rg).length);
+  charts.region = new Chart(document.getElementById('regionChart'), {
+    type:'bar',
+    data:{ labels:regions, datasets:[
+      { label:'Pending dispatch', data:pdCounts, backgroundColor:'#2A78D6', borderRadius:4 },
+      { label:'Pending receiving', data:prCounts, backgroundColor:'#EB6834', borderRadius:4 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{boxWidth:12, font:{size:11}} }, datalabels:{color:'#16202B', anchor:'end', align:'top', font:{size:9,weight:'bold'}} },
+      scales:{ x:{grid:{display:false}, ticks:{font:{size:10}}}, y:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}} } }
+  });
+}
+
+function renderSlabChart(pd, pr){
+  destroy('slab');
+  const order = ['0-2 Days','3-5 Days','6-10 Days','10+ Days'];
+  const pdCounts = order.map(s=>pd.filter(r=>r.slab===s).length);
+  const prCounts = order.map(s=>pr.filter(r=>r.slab===s).length);
+  charts.slab = new Chart(document.getElementById('slabChart'), {
+    type:'bar',
+    data:{ labels:order, datasets:[
+      { label:'Pending dispatch', data:pdCounts, backgroundColor:'#2A78D6', borderRadius:4 },
+      { label:'Pending receiving', data:prCounts, backgroundColor:'#EB6834', borderRadius:4 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{boxWidth:12, font:{size:11}} }, datalabels:{color:'#16202B', anchor:'end', align:'top', font:{size:9,weight:'bold'}} },
+      scales:{ x:{grid:{display:false}, ticks:{font:{size:10}}}, y:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}} } }
+  });
+}
+
+function groupCount(arr, key){
+  const c = {};
+  arr.forEach(r=>{ c[r[key]] = (c[r[key]]||0)+1; });
+  return Object.entries(c).sort((a,b)=>b[1]-a[1]);
+}
+
+function renderCmCharts(pd, pr){
+  destroy('cmD'); destroy('cmR');
+  const dEntries = groupCount(pd, 'cm');
+  const rEntries = groupCount(pr, 'cm');
+  const dh = Math.max(220, dEntries.length*28+60);
+  const rh = Math.max(220, rEntries.length*28+60);
+  document.getElementById('cmDispatchChart').parentElement.style.height = dh+'px';
+  document.getElementById('cmReceivingChart').parentElement.style.height = rh+'px';
+  charts.cmD = new Chart(document.getElementById('cmDispatchChart'), {
+    type:'bar',
+    data:{ labels:dEntries.map(e=>e[0]), datasets:[{ data:dEntries.map(e=>e[1]), backgroundColor:'#2A78D6', borderRadius:4 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, datalabels:dlDark },
+      scales:{ x:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}}, y:{grid:{display:false}, ticks:{font:{size:10}}} } }
+  });
+  charts.cmR = new Chart(document.getElementById('cmReceivingChart'), {
+    type:'bar',
+    data:{ labels:rEntries.map(e=>e[0]), datasets:[{ data:rEntries.map(e=>e[1]), backgroundColor:'#EB6834', borderRadius:4 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, datalabels:dlDark },
+      scales:{ x:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}}, y:{grid:{display:false}, ticks:{font:{size:10}}} } }
+  });
+}
+
+function renderTop10Charts(pd, pr){
+  destroy('t10D'); destroy('t10R');
+  const pdEx = pd.filter(r=>r.slab!=='0-2 Days');
+  const prEx = pr.filter(r=>r.slab!=='0-2 Days');
+  const dEntries = groupCount(pdEx, 'store').slice(0,10);
+  const rEntries = groupCount(prEx, 'store').slice(0,10);
+  charts.t10D = new Chart(document.getElementById('top10DispatchChart'), {
+    type:'bar',
+    data:{ labels:dEntries.map(e=>e[0]), datasets:[{ data:dEntries.map(e=>e[1]), backgroundColor:'#E34948', borderRadius:4 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, datalabels:dlDark },
+      scales:{ x:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}}, y:{grid:{display:false}, ticks:{font:{size:10}}} } }
+  });
+  charts.t10R = new Chart(document.getElementById('top10ReceivingChart'), {
+    type:'bar',
+    data:{ labels:rEntries.map(e=>e[0]), datasets:[{ data:rEntries.map(e=>e[1]), backgroundColor:'#F2A93C', borderRadius:4 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, datalabels:dlDark },
+      scales:{ x:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}}, y:{grid:{display:false}, ticks:{font:{size:10}}} } }
+  });
+}
+
+function renderRouteTables(pd, pr){
+  const fill = (id, rows)=>{
+    const entries = groupCount(rows, 'route');
+    document.querySelector('#'+id+' tbody').innerHTML = entries.map(([route,count])=>
+      '<tr><td>'+route+'</td><td>'+count.toLocaleString()+'</td></tr>').join('') ||
+      '<tr><td colspan="2" style="color:var(--ink-mute);">No rows match the current filters.</td></tr>';
+  };
+  fill('routeTablePD', pd);
+  fill('routeTablePR', pr);
+}
+
+function rowVal(r, key){
+  switch(key){
+    case 'transfer': return r.transfer||'';
+    case 'store': return r.store;
+    case 'region': return r.region;
+    case 'route': return r.route;
+    case 'cm': return r.cm;
+    case 'qty': return r.qty||0;
+    case 'date': return r.drivingDate ? r.drivingDate.getTime() : -1;
+    case 'age': return r.age==null ? -1 : r.age;
+    case 'slab': return r.slab;
+    default: return '';
+  }
+}
+function sortRows(rows, sortState){
+  const {key, dir} = sortState;
+  return [...rows].sort((a,b)=>{
+    const av=rowVal(a,key), bv=rowVal(b,key);
+    if(typeof av==='number') return dir==='asc' ? av-bv : bv-av;
+    return dir==='asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+  });
+}
+
+function renderTable(flow, rows){
+  const sortState = flow==='pd' ? SORT_PD : SORT_PR;
+  const sorted = sortRows(rows, sortState);
+  const bodyId = flow==='pd' ? 'pdTableBody' : 'prTableBody';
+  const countId = flow==='pd' ? 'pdTableCount' : 'prTableCount';
+  document.getElementById(bodyId).innerHTML = sorted.slice(0,500).map(r=>{
+    const tn = r.transfer||'';
+    const remVal = (remarksMap[tn]||'').replace(/"/g,'&quot;');
+    return '<tr class="'+(r.age!=null && r.age>10 ? 'crit' : '')+'">'+
+    '<td>'+tn+'</td>'+
+    '<td>'+r.store+' — '+(r.storeName||'')+'</td>'+
+    '<td>'+r.region+'</td>'+
+    '<td>'+r.route+'</td>'+
+    '<td>'+r.cm+'</td>'+
+    '<td>'+(r.qty||0).toLocaleString()+'</td>'+
+    '<td>'+fmtDate(r.drivingDate)+'</td>'+
+    '<td>'+(r.age==null?'—':r.age)+'</td>'+
+    '<td>'+r.slab+'</td>'+
+    '<td><input type="text" class="remark-input" data-tn="'+tn+'" value="'+remVal+'" placeholder="Add remark…" oninput="updateRemark(this)" onblur="submitRemarkToLive(this)"></td>'+
+    '</tr>';
+  }).join('');
+  document.getElementById(countId).textContent = rows.length.toLocaleString() + ' matching lines' + (rows.length>500 ? ' (first 500 shown)' : '');
+  window['_export_'+flow] = sorted;
+}
+
+function buildCmStoreSummary(rows){
+  const map = {};
+  rows.forEach(r=>{
+    const key = r.cm+'|'+r.store+'|'+r.region;
+    if(!map[key]) map[key] = { cm:r.cm, store:r.store, name:r.storeName, region:r.region, count:0, qty:0 };
+    map[key].count += 1;
+    map[key].qty += (r.qty||0);
+  });
+  return Object.values(map).sort((a,b)=>b.qty-a.qty);
+}
+
+function renderSummaryTables(pd, pr){
+  const fill = (id, rows)=>{
+    const lines = buildCmStoreSummary(rows);
+    document.querySelector('#'+id+' tbody').innerHTML = lines.map(l=>
+      '<tr><td>'+l.cm+'</td><td>'+l.store+' — '+(l.name||'')+'</td><td>'+l.region+'</td><td>'+l.count.toLocaleString()+'</td><td>'+l.qty.toLocaleString()+'</td></tr>'
+    ).join('') || '<tr><td colspan="5" style="color:var(--ink-mute);">No data.</td></tr>';
+  };
+  fill('summaryTablePD', pd);
+  fill('summaryTablePR', pr);
+  window._summary_pd = buildCmStoreSummary(pd);
+  window._summary_pr = buildCmStoreSummary(pr);
+}
+
+function exportSummaryCSV(flow){
+  const lines = flow==='pd' ? window._summary_pd : window._summary_pr;
+  if(!lines) return;
+  const csv = ['Cluster Manager,Store Code,Store Name,Region,TO Count,Pending Qty'];
+  lines.forEach(l=>{
+    csv.push('"'+l.cm+'","'+l.store+'","'+(l.name||'').replace(/"/g,'""')+'","'+l.region+'",'+l.count+','+l.qty);
+  });
+  const blob = new Blob([csv.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (flow==='pd' ? 'Cluster_Manager_Store_Pending_Dispatch' : 'Cluster_Manager_Store_Pending_Receiving') + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportCSV(flow){
+  const rows = window['_export_'+flow] || [];
+  const headers = ['Transfer No','Store Code','Store Name','Region','Sub Region','Route','Cluster Manager','Pending Qty','Driving Date','Age (Days)','Age Slab','Remarks'];
+  const lines = [headers.join(',')];
+  rows.forEach(r=>{
+    const cells = [
+      r.transfer||'', r.store, (r.storeName||'').replace(/,/g,' '), r.region, r.div,
+      r.route, r.cm, r.qty||0, fmtDate(r.drivingDate), r.age==null?'':r.age, r.slab,
+      remarksMap[r.transfer||'']||''
+    ];
+    lines.push(cells.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(','));
+  });
+  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (flow==='pd' ? 'Pending_Dispatch_Lines' : 'Pending_Receiving_Lines') + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
