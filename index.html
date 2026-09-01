@@ -2,1344 +2,1664 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Transfer Order Aging — Compliance Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sapphire Retail — Returns &amp; Refunds Compliance</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
   :root{
-    --navy:#122544; --navy-deep:#0B1A30;
-    --blue:#2E5FA3; --blue-tint:#EAF1FA;
-    --orange:#B85C33; --orange-tint:#FAEEE7;
-    --teal:#12756C; --teal-tint:#E7F2F0; --amber:#B8842E; --red:#AE3A3A; --red-tint:#F7EAEA; --violet:#544A8F; --green:#2E7A4F;
-    --ink:#182233; --ink-soft:#3D4652; --ink-mute:#5C6672;
-    --paper:#FFFFFF; --bg:#F3F5F9; --line:#DEE3EC;
+    --navy-900:#0B2338;
+    --navy-800:#0F2E48;
+    --navy-700:#153B5B;
+    --teal-600:#0E7C86;
+    --teal-500:#128A95;
+    --teal-100:#E4F3F3;
+    --bg:#F2F5F7;
+    --card:#FFFFFF;
+    --line:#DCE3E9;
+    --ink-900:#12202C;
+    --ink-600:#4A5C6A;
+    --ink-400:#8496A3;
+    --amber:#B4720A;
+    --amber-bg:#FCF1DE;
+    --red:#B23A2E;
+    --red-bg:#FBE9E7;
+    --green:#146C43;
+    --green-bg:#E4F4EA;
+    --grey-bg:#EBEEF1;
+    --grey:#5B6B78;
+    --radius:6px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: "SF Mono", Consolas, monospace;
   }
   *{box-sizing:border-box;}
-  body{
-    margin:0; background:var(--bg); color:var(--ink);
-    font-family:Arial, "Helvetica Neue", Helvetica, sans-serif;
-    -webkit-font-smoothing:antialiased;
-    letter-spacing:.1px;
-  }
-  .wrap{max-width:1240px; margin:0 auto; padding:0 24px 60px;}
+  body{margin:0;background:var(--bg);font-family:var(--font);color:var(--ink-900);font-size:14px;line-height:1.45;}
+  a{color:var(--teal-600);}
 
-  .masthead{
-    background:var(--navy); color:#fff; margin:0 -24px 24px; padding:24px 24px 20px;
-    display:flex; justify-content:space-between; align-items:center;
-    border-bottom:3px solid var(--blue);
-  }
-  .masthead .eyebrow{ font-size:10.5px; letter-spacing:2.2px; text-transform:uppercase; color:#8FADD6; margin:0 0 6px; font-weight:700; }
-  .masthead h1{ font-size:23px; font-weight:700; margin:0; letter-spacing:.2px; }
-  .masthead .meta{ text-align:right; font-size:11px; color:#A9BEDA; line-height:1.7; }
-  .masthead .badge{
-    display:inline-block; background:var(--amber); color:#2E1F05; font-weight:700; font-size:11px;
-    padding:3px 10px; border-radius:3px; margin-top:6px; letter-spacing:.2px;
-  }
+  header.top{background:var(--navy-900);color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(255,255,255,.08);}
+  .brand{display:flex;align-items:center;gap:10px;padding:12px 0;}
+  .brand .mark{width:30px;height:30px;border-radius:5px;background:linear-gradient(135deg,var(--teal-500),var(--teal-600));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;}
+  .brand .title{font-size:14.5px;font-weight:600;letter-spacing:.2px;}
+  .brand .sub{font-size:11.5px;color:#9FB4C4;}
 
-  .upload-box{
-    border:1.5px dashed var(--blue); padding:22px; text-align:center; margin-bottom:22px;
-    background:var(--blue-tint); border-radius:8px;
-  }
-  .upload-box.compact{ padding:12px 20px; text-align:left; display:flex; align-items:center; justify-content:space-between; border-style:solid; border-color:var(--line); }
-  .upload-box p{ margin:0 0 10px; font-size:13px; color:var(--ink-soft); }
-  .upload-box .req{ font-size:11px; color:var(--ink-mute); margin-top:8px; }
-  button, .btn{
-    font-family:Arial, sans-serif; background:var(--blue); color:#fff;
-    border:none; padding:9px 16px; font-size:11.5px; letter-spacing:.3px;
-    border-radius:5px; cursor:pointer; font-weight:700;
-  }
-  button:hover{ background:#254E88; }
-  button.ghost{ background:#fff; color:var(--blue); border:1.3px solid var(--blue); }
-  button.ghost:hover{ background:var(--blue-tint); }
-  button.export{ background:var(--teal); }
-  button.export:hover{ background:#0D5E57; }
-  button.live-publish{ background:var(--green); }
-  button.live-publish:hover{ background:#245F3F; }
-  #fileInput{ display:none; }
-  .err{
-    border:1.5px solid var(--red); background:#F9EAEA; color:#6E2626; padding:12px 16px;
-    font-size:12px; margin-bottom:20px; display:none; border-radius:8px;
-  }
-  .err.show{ display:block; }
+  .role-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0;}
+  .role-bar select{background:var(--navy-700);color:#fff;border:1px solid #24506e;border-radius:5px;padding:6px 10px;font-size:13px;}
+  .role-bar select:focus{outline:2px solid var(--teal-500);}
+  .clock{font-size:11.5px;color:#9FB4C4;text-align:right;}
+  .clock b{color:#fff;font-weight:600;}
 
-  .live-panel{
-    background:var(--paper); border:1px solid var(--line); border-radius:8px;
-    padding:12px 16px; margin-bottom:16px; box-shadow:0 1px 3px rgba(20,40,70,.05);
-  }
-  .live-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  .live-label{ font-size:10.5px; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-mute); font-weight:700; white-space:nowrap; }
-  #apiUrlInput{
-    flex:1; min-width:220px; font-family:Arial, sans-serif; font-size:12px; padding:8px 10px;
-    border:1.3px solid var(--line); border-radius:5px; color:var(--ink);
-  }
-  .live-status{ font-size:11px; color:var(--ink-mute); white-space:nowrap; }
-  .live-status.ok{ color:var(--green); font-weight:700; }
-  .live-status.err{ color:var(--red); font-weight:700; }
+  nav.tabs{background:var(--navy-800);display:flex;gap:2px;padding:0 20px;overflow-x:auto;}
+  nav.tabs button{background:transparent;border:none;color:#B7C7D3;padding:11px 16px;font-size:13.2px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+  nav.tabs button:hover{color:#fff;}
+  nav.tabs button.active{color:#fff;border-bottom-color:var(--teal-500);}
 
-  .store-banner{
-    background:var(--navy); color:#fff; padding:10px 16px; border-radius:8px;
-    margin-bottom:16px; font-size:12.5px; font-weight:700; letter-spacing:.2px;
-  }
-  .store-banner .sub{ font-weight:400; color:#A9BEDA; font-size:11px; margin-top:2px; }
+  main{max-width:1320px;margin:0 auto;padding:22px 20px 60px;}
+  .panel-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  .panel-head h1{font-size:19px;margin:0;font-weight:650;}
+  .panel-head p{margin:2px 0 0;color:var(--ink-600);font-size:13px;}
 
-  #dashboard{ display:none; }
+  .grid{display:grid;gap:14px;}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:18px;}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;}
+  .kpi .num{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .kpi .lbl{font-size:12px;color:var(--ink-600);margin-top:2px;}
+  .kpi.accent{border-left:3px solid var(--teal-600);}
 
-  .kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:26px; }
-  .kpi{
-    background:var(--blue-tint); border-radius:8px; padding:15px 16px; border-left:4px solid var(--blue);
-    box-shadow:0 1px 3px rgba(20,40,70,.06); transition:box-shadow .15s ease;
-  }
-  .kpi:hover{ box-shadow:0 3px 10px rgba(20,40,70,.1); }
-  .kpi.c-orange{ border-left-color:var(--orange); background:var(--orange-tint); }
-  .kpi.c-red{ border-left-color:var(--red); background:var(--red-tint); }
-  .kpi.c-teal{ border-left-color:var(--teal); background:var(--teal-tint); }
-  .kpi .label{ font-size:10.5px; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:8px; font-weight:700; }
-  .kpi .value{ font-size:26px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1; color:var(--navy); }
-  .kpi.c-red .value{ color:var(--red); }
-  .kpi .sub{ font-size:10.5px; color:var(--ink-soft); margin-top:4px; }
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:18px;overflow:hidden;}
+  .card > .card-head{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:#FAFBFC;}
+  .card > .card-head h2{font-size:14px;margin:0;font-weight:650;}
+  .card > .card-head .count{font-size:12px;color:var(--ink-600);}
+  .card-body{padding:14px 16px;}
 
-  .sec-head{ display:flex; justify-content:space-between; align-items:baseline; margin:32px 0 14px; }
-  .sec-head h2{ font-size:15px; margin:0; font-weight:700; color:var(--navy); }
-  .sec-head .n{ font-size:11.5px; color:var(--ink-mute); }
+  table{width:100%;border-collapse:collapse;font-size:12.8px;}
+  th{text-align:left;color:var(--ink-600);font-weight:600;font-size:11.5px;text-transform:none;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  td{padding:8px 10px;border-bottom:1px solid #EEF1F4;vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#F8FAFB;}
+  /* Compact variant for wide multi-column summary tables (Store Summary,
+     Cluster/Regional KPI rows) so they fit without excessive horizontal
+     scroll on a laptop screen. */
+  .compact-table th{padding:5px 6px;font-size:10.5px;white-space:normal;}
+  .compact-table td{padding:4px 6px;font-size:11.5px;}
+  .compact-table td:first-child{white-space:nowrap;}
+  .mono{font-family:var(--mono);font-size:11.8px;color:var(--ink-600);}
+  .num-cell{text-align:right;font-variant-numeric:tabular-nums;}
 
-  .slicers{
-    display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:16px;
-    border-radius:10px; padding:16px; margin-bottom:8px; background:var(--paper);
-    box-shadow:0 1px 4px rgba(20,40,70,.06);
-  }
-  .slicer .label{ font-size:10.5px; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-mute); margin-bottom:6px; font-weight:700; }
-  .chip-list{ display:flex; flex-wrap:wrap; gap:6px; max-height:96px; overflow-y:auto; }
-  .chip{
-    font-size:11.5px; padding:5px 11px; border:1.5px solid var(--line); background:#fff; border-radius:14px;
-    cursor:pointer; user-select:none; white-space:nowrap; color:var(--ink-soft);
-  }
-  .chip.active{ background:var(--blue); border-color:var(--blue); color:#fff; }
-  select{
-    width:100%; font-family:Arial, sans-serif; font-size:12px; padding:8px; border:1.5px solid var(--line);
-    background:#fff; color:var(--ink); border-radius:6px;
-  }
-  .reset-row{ text-align:right; margin:10px 0 4px; }
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+  .badge.st-not{background:var(--grey-bg);color:var(--grey);}
+  .badge.st-await{background:var(--amber-bg);color:var(--amber);}
+  .badge.st-rereview{background:var(--red-bg);color:var(--red);}
+  .badge.st-signed{background:var(--green-bg);color:var(--green);}
 
-  .tabs{ display:flex; gap:8px; margin-bottom:22px; border-bottom:2px solid var(--line); }
-  .tab-btn{
-    background:transparent; color:var(--ink-soft); border:none; border-radius:0;
-    padding:10px 4px; margin-right:20px; font-weight:700; font-size:12.5px; letter-spacing:.3px;
-    border-bottom:3px solid transparent; text-transform:none;
-  }
-  .tab-btn:hover{ background:transparent; color:var(--navy); }
-  .tab-btn.active{ color:var(--navy); border-bottom-color:var(--blue); }
-  .tab-panel{ display:none; }
-  .tab-panel.active{ display:block; }
+  .btn{display:inline-flex;align-items:center;gap:6px;background:var(--teal-600);color:#fff;border:none;border-radius:5px;padding:7px 13px;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{background:var(--teal-500);}
+  .btn.secondary{background:#fff;color:var(--navy-800);border:1px solid var(--line);}
+  .btn.secondary:hover{background:#F2F5F7;}
+  .btn.danger{background:#fff;color:var(--red);border:1px solid #EAC9C4;}
+  .btn.danger:hover{background:var(--red-bg);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn.sm{padding:5px 10px;font-size:11.5px;}
 
-  #summaryTablePD th, #summaryTablePR th{ }
+  input[type=text],input[type=date],input[type=file],select,textarea{font-family:var(--font);font-size:12.8px;border:1px solid var(--line);border-radius:5px;padding:6px 9px;background:#fff;color:var(--ink-900);}
+  textarea{width:100%;min-height:44px;resize:vertical;}
+  input[type=checkbox]{width:15px;height:15px;}
+  .field-label{font-size:11px;color:var(--ink-600);margin-bottom:3px;display:block;}
+  .locked-note{font-size:11.3px;color:var(--ink-400);font-style:italic;}
+  .remark-locked{background:#F6F8F9;border-radius:4px;padding:6px 8px;font-size:12.3px;color:var(--ink-600);white-space:pre-wrap;}
 
-  .chart-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:8px; }
-  .chart-card{
-    background:var(--paper); border-radius:10px; padding:16px 18px 12px;
-    box-shadow:0 1px 4px rgba(20,40,70,.08);
-  }
-  .chart-card h3{ font-size:13px; margin:0 0 12px; font-weight:700; color:var(--navy); }
-  .chart-wrap{ position:relative; height:260px; }
-  .chart-wrap.tall{ height:320px; }
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+  .toolbar .field-label{margin-bottom:0;margin-right:4px;}
 
-  .table-section{ margin-bottom:8px; }
-  .table-head-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-  .table-wrap{ background:var(--paper); border-radius:10px; max-height:420px; overflow-y:auto; box-shadow:0 1px 4px rgba(20,40,70,.08); }
-  table{ width:100%; border-collapse:collapse; font-size:11.5px; }
-  thead th{
-    position:sticky; top:0; background:var(--navy); color:#fff; text-align:left;
-    padding:9px 10px; font-size:10px; letter-spacing:.4px; text-transform:uppercase; cursor:pointer;
-  }
-  thead th:hover{ background:var(--navy-deep); }
-  tbody td{ padding:7px 10px; border-bottom:1px solid #eef1f5; white-space:nowrap; }
-  tbody tr:nth-child(even){ background:#F8FAFD; }
-  tbody tr.crit{ background:#FDECE5; }
-  tbody tr.crit td{ font-weight:700; color:#8A2E12; }
-  .table-foot{ font-size:10.5px; color:var(--ink-mute); padding:8px 4px; }
-  .remark-input{
-    width:180px; font-family:Arial, sans-serif; font-size:11px; padding:5px 7px;
-    border:1.3px solid var(--line); border-radius:5px; background:#FFFDF5;
-  }
-  .remark-input:focus{ outline:none; border-color:var(--blue); background:#fff; }
-  .review-badge{
-    font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:12px;
-    white-space:nowrap; display:inline-block;
-  }
-  .review-badge.ok{ background:var(--teal-tint); color:var(--teal); }
-  .review-btn{
-    background:var(--teal); color:#fff; border:none; padding:5px 12px; font-size:10.5px;
-    font-weight:700; border-radius:5px; cursor:pointer; white-space:nowrap;
-  }
-  .review-btn:hover{ background:#0D5E57; }
-  .review-btn:disabled{ opacity:.6; cursor:default; }
+  .empty{padding:30px 16px;text-align:center;color:var(--ink-400);font-size:13px;}
+  .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;}
+  .dot-green{background:#1FA971;}
+  .dot-red{background:#D9463B;}
 
-  ::-webkit-scrollbar{ width:8px; height:8px; }
-  ::-webkit-scrollbar-thumb{ background:#c7d2e0; border-radius:4px; }
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--navy-900);color:#fff;padding:12px 16px;border-radius:6px;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:100;max-width:340px;transition:opacity .3s, transform .3s;}
+  .toast.hide{opacity:0;transform:translateY(8px);pointer-events:none;}
 
-  @media print{
-    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
-    body{ background:#fff; }
-    .upload-box{ display:none !important; }
-    .tabs{ display:none !important; }
-    .tab-panel{ display:block !important; }
-    button{ display:none !important; }
-    .table-head-row{ min-height:0; }
-    .table-wrap{ max-height:none !important; overflow:visible !important; box-shadow:none; }
-    .chart-card, .kpi, .table-section, .slicers{ break-inside:avoid; }
-    .chart-wrap, .chart-wrap.tall{ height:220px !important; }
-    thead th{ position:static; }
-    .remark-input{ border:none; background:none; padding:2px 0; width:auto; }
-  }
+  .note-box{background:var(--teal-100);border:1px solid #BFE1E2;border-radius:5px;padding:10px 12px;font-size:12.3px;color:#0A5459;margin-bottom:16px;}
+  .warn-box{background:var(--amber-bg);border:1px solid #EFD9AE;border-radius:5px;padding:10px 12px;font-size:12.3px;color:#7A4E08;margin-bottom:16px;}
+
+  .filters-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;}
+  .filters-grid select, .filters-grid input{width:100%;}
+
+  ::-webkit-scrollbar{height:8px;width:8px;}
+  ::-webkit-scrollbar-thumb{background:#C7D1D8;border-radius:4px;}
+
+  .login-gate{max-width:420px;margin:40px auto;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:26px 26px 22px;text-align:left;}
+  .login-gate h1{font-size:17px;margin:0 0 4px;}
+  .login-gate p{color:var(--ink-600);font-size:12.8px;margin:0 0 18px;}
+  .login-gate .field-label{margin-top:12px;}
+  .login-gate select,.login-gate input{width:100%;padding:8px 10px;}
+  .login-gate .btn{width:100%;justify-content:center;margin-top:16px;padding:9px;}
+  .login-gate .lockicon{font-size:22px;margin-bottom:6px;}
+  .auto-field{background:#F6F8F9;border-radius:5px;padding:7px 10px;font-size:12.8px;color:var(--ink-600);}
+  .session-bar{display:flex;align-items:center;justify-content:space-between;background:#EDF6F6;border:1px solid #CFE7E8;border-radius:6px;padding:8px 14px;margin-bottom:16px;font-size:12.5px;}
+  .session-bar a{cursor:pointer;color:var(--teal-600);font-weight:600;text-decoration:none;}
+  .kpi-status{grid-template-columns:repeat(3,1fr);}
 </style>
 </head>
 <body>
-<script id="embeddedData" type="application/json">null</script>
-<div class="wrap">
 
-  <div class="masthead">
+<header class="top">
+  <div class="brand">
+    <div class="mark">SR</div>
     <div>
-      <p class="eyebrow">Sapphire Retail Limited — Retail Compliance</p>
-      <h1>Transfer Order Aging Dashboard</h1>
-    </div>
-    <div class="meta" id="metaBlock">
-      <div>Source: —</div>
-      <div>Generated: —</div>
-      <div class="badge" id="recordCountTop">0 records loaded</div>
+      <div class="title">Returns &amp; Refunds Compliance</div>
+      <div class="sub">Sapphire Retail · Operations Governance &amp; Control</div>
     </div>
   </div>
-
-  <div class="live-panel" id="livePanel">
-    <div class="live-row">
-      <span class="live-label">Live data source</span>
-      <input type="text" id="apiUrlInput" placeholder="Paste your Apps Script Web App URL (ends in /exec)">
-      <button class="ghost" onclick="connectLive()">Connect</button>
-      <button class="ghost" onclick="fetchLiveData(true)">Refresh</button>
-      <span class="live-status" id="liveStatus">Not connected — showing local upload mode.</span>
-    </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="clock" id="clockBox"></div>
+    <button class="btn sm secondary" id="manualRefreshBtn" title="Refresh now">↻ Refresh</button>
+    <a id="adminEntryLink" title="Administrator access" style="font-size:11px;color:#7c93a3;cursor:pointer;text-decoration:underline;white-space:nowrap;">Admin</a>
   </div>
+</header>
 
-  <div class="store-banner" id="storeBanner" style="display:none;"></div>
+<nav class="tabs" id="tabBar"></nav>
 
-  <div class="upload-box" id="uploadBox">
-    <p><strong>Upload the Transfer Order workbook</strong> — must contain a "Transfer Data Sheet" and a "Node Master" sheet, same layout as the compliance dashboard export.</p>
-    <button onclick="document.getElementById('fileInput').click()">Choose file</button>
-    <input type="file" id="fileInput" accept=".xlsx,.xls" />
-    <div class="req">Required columns — Transfer Data Sheet: Transfer number, Transfer status, From warehouse, To warehouse, Ship Date, Receipt Date, TO Qty, Ship Qty, Recvd. Qty, Created date and time. Node Master: Code, Node Name, Region, Node Type, Cluster Manager Name, Region Division.</div>
-  </div>
-  <div class="err" id="errBox"></div>
+<main id="mainArea"></main>
 
-  <div id="dashboard">
-
-    <div class="upload-box compact" id="adminToolbar">
-      <span id="loadedFileName" style="font-size:12px; color:var(--navy); font-weight:700;"></span>
-      <span>
-        <button class="ghost" onclick="document.getElementById('fileInput').click()">Replace file</button>
-        <button class="live-publish" id="publishBtn" onclick="publishToLive()" style="display:none;">Publish to live dashboard</button>
-      </span>
-    </div>
-
-    <div class="tabs" id="tabsBar">
-      <button class="tab-btn active" data-tab="dash" onclick="showTab('dash')">Dashboard</button>
-      <button class="tab-btn" data-tab="summary" onclick="showTab('summary')">Cluster Manager Summary</button>
-    </div>
-
-    <div id="tabDash" class="tab-panel active">
-
-    <div class="kpis" id="kpiRow"></div>
-
-    <div id="adminOnlySection">
-    <div class="sec-head"><h2>Filters</h2><span class="n" id="filteredCount"></span></div>
-    <div class="slicers">
-      <div class="slicer">
-        <div class="label">Region</div>
-        <div class="chip-list" id="regionChips"></div>
-      </div>
-      <div class="slicer">
-        <div class="label">Cluster manager</div>
-        <div class="chip-list" id="cmChips"></div>
-      </div>
-      <div class="slicer">
-        <div class="label">Age slab</div>
-        <div class="chip-list" id="slabChips"></div>
-      </div>
-    </div>
-    <div class="reset-row"><button class="ghost" onclick="resetFilters()">Reset filters</button></div>
-
-    <div class="sec-head"><h2>Visuals</h2><span class="n">Reflects current filter selection</span></div>
-    <div class="chart-grid">
-      <div class="chart-card">
-        <h3>Pending TOs by region</h3>
-        <div class="chart-wrap"><canvas id="regionChart" role="img" aria-label="Grouped bar chart of pending dispatch and receiving counts by region"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>Age slab distribution</h3>
-        <div class="chart-wrap"><canvas id="slabChart" role="img" aria-label="Bar chart of TO counts by age slab"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>Pending dispatch by cluster manager</h3>
-        <div class="chart-wrap tall"><canvas id="cmDispatchChart" role="img" aria-label="Horizontal bar chart of pending dispatch count by cluster manager"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>Pending receiving by cluster manager</h3>
-        <div class="chart-wrap tall"><canvas id="cmReceivingChart" role="img" aria-label="Horizontal bar chart of pending receiving count by cluster manager"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>Top 10 pending dispatch stores (excl. 0-2 days)</h3>
-        <div class="chart-wrap tall"><canvas id="top10DispatchChart" role="img" aria-label="Horizontal bar chart of top 10 stores by pending dispatch count, excluding 0-2 day aging"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <h3>Top 10 pending receiving stores (excl. 0-2 days)</h3>
-        <div class="chart-wrap tall"><canvas id="top10ReceivingChart" role="img" aria-label="Horizontal bar chart of top 10 stores by pending receiving count, excluding 0-2 day aging"></canvas></div>
-      </div>
-    </div>
-
-    <div class="sec-head"><h2>Route mix</h2><span class="n">From node type to node type</span></div>
-    <div class="chart-grid">
-      <div class="chart-card">
-        <h3>Pending dispatch — route mix</h3>
-        <table id="routeTablePD"><thead><tr><th>Route</th><th>Count</th></tr></thead><tbody></tbody></table>
-      </div>
-      <div class="chart-card">
-        <h3>Pending receiving — route mix</h3>
-        <table id="routeTablePR"><thead><tr><th>Route</th><th>Count</th></tr></thead><tbody></tbody></table>
-      </div>
-    </div>
-    </div><!-- /adminOnlySection -->
-
-    <div class="table-section">
-      <div class="sec-head"><h2>Pending dispatch — line detail</h2><span class="n" id="pdTableCount"></span></div>
-      <div class="table-head-row">
-        <span></span>
-        <span>
-          <button class="ghost" onclick="document.getElementById('importRemarksInput').click()">Import remarks CSV</button>
-          <button class="export" onclick="exportCSV('pd')">Export CSV</button>
-        </span>
-      </div>
-      <div class="table-wrap">
-        <table id="pdTable">
-          <thead><tr>
-            <th data-k="transfer">Transfer no</th><th data-k="store">Store</th><th data-k="region">Region</th>
-            <th data-k="route">Route</th><th data-k="cm">Cluster manager</th><th data-k="qty">Pending qty</th>
-            <th data-k="date">Created date</th><th data-k="age">Age (days)</th><th data-k="slab">Age slab</th>
-            <th>Remarks</th><th>Review</th>
-          </tr></thead>
-          <tbody id="pdTableBody"></tbody>
-        </table>
-      </div>
-      <div class="table-foot">Excludes TOs aged 0-2 days. Showing up to 500 rows sorted by current sort key. Export includes all filtered rows and remarks. Remarks auto-save to this browser as you type.</div>
-    </div>
-
-    <div class="table-section">
-      <div class="sec-head"><h2>Pending receiving — line detail</h2><span class="n" id="prTableCount"></span></div>
-      <div class="table-head-row">
-        <span></span>
-        <span>
-          <button class="ghost" onclick="document.getElementById('importRemarksInput').click()">Import remarks CSV</button>
-          <button class="export" onclick="exportCSV('pr')">Export CSV</button>
-        </span>
-      </div>
-      <div class="table-wrap">
-        <table id="prTable">
-          <thead><tr>
-            <th data-k="transfer">Transfer no</th><th data-k="store">Store</th><th data-k="region">Region</th>
-            <th data-k="route">Route</th><th data-k="cm">Cluster manager</th><th data-k="qty">Pending qty</th>
-            <th data-k="date">Ship date</th><th data-k="age">Age (days)</th><th data-k="slab">Age slab</th>
-            <th>Remarks</th><th>Review</th>
-          </tr></thead>
-          <tbody id="prTableBody"></tbody>
-        </table>
-      </div>
-      <div class="table-foot">Excludes TOs aged 0-2 days. Showing up to 500 rows sorted by current sort key. Export includes all filtered rows and remarks. Remarks auto-save to this browser as you type.</div>
-    </div>
-
-    <input type="file" id="importRemarksInput" accept=".csv" style="display:none;" />
-
-    </div><!-- /tabDash -->
-
-    <div id="tabSummary" class="tab-panel">
-      <div class="sec-head"><h2>Cluster manager &times; store — pending dispatch</h2><span class="n">Excludes 0-2 day TOs. Largest to smallest by pending qty</span></div>
-      <div class="table-head-row"><span></span><button class="export" onclick="exportSummaryCSV('pd')">Export CSV</button></div>
-      <div class="table-wrap">
-        <table id="summaryTablePD"><thead><tr><th>Cluster manager</th><th>Store</th><th>Region</th><th>TO count</th><th>Pending qty</th></tr></thead><tbody></tbody></table>
-      </div>
-
-      <div class="sec-head"><h2>Cluster manager &times; store — pending receiving</h2><span class="n">Excludes 0-2 day TOs. Largest to smallest by pending qty</span></div>
-      <div class="table-head-row"><span></span><button class="export" onclick="exportSummaryCSV('pr')">Export CSV</button></div>
-      <div class="table-wrap">
-        <table id="summaryTablePR"><thead><tr><th>Cluster manager</th><th>Store</th><th>Region</th><th>TO count</th><th>Pending qty</th></tr></thead><tbody></tbody></table>
-      </div>
-    </div>
-
-  </div>
-</div>
+<div id="toast" class="toast hide"></div>
 
 <script>
-if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
-Chart.defaults.font.family = 'Arial';
+/* =========================================================
+   STATIC MASTER DATA
+   Store list sourced from the Attributes_Store sheet of the real
+   Return Report export (60 stores). closed:true stores are kept in
+   the list (so historical returns still resolve to a store) but are
+   excluded from the store-login dropdown and from cluster manager
+   assignment.
+   ========================================================= */
+const STORES = [
+  {code:'S2005GUL', name:'Gulberg II, Lahore', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
+  {code:'S2001AIT', name:'Allama Iqbal Town, Lahore', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
+  {code:'S4005GUJ', name:'Satellite Town, Gujranwala', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
+  {code:'S4001BWP', name:'Avenue Plaza, Bahawalpur', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
+  {code:'S2007PML', name:'Packages Mall, Lahore', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
+  {code:'S4008MUL', name:'Gulgasht Colony, Multan', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
+  {code:'S4011SHW', name:'College Road, Sahiwal', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
+  {code:'S4009RHW', name:'Gujranwala Rahwali store', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
+  {code:'S2004EMP', name:'Emporium Mall, Lahore', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
+  {code:'S4004GRT', name:'Kutchery road, Gujrat', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
+  {code:'S2003DHA', name:'Y-Block DHA, Lahore', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
+  {code:'S4002FSD', name:'Jaranwala Road, Faislabad', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
+  {code:'S4015SKP', name:'Sargodha Road, Sheikhpura', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
+  {code:'S4012SKT', name:'V-Mall, Sialkot', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
+  {code:'S2006MOD', name:'Mall of Defence, Lahore', cluster:'Closed', clusterManager:'Unassigned', region:'Central', closed:true},
+  {code:'S4003FSG', name:'Layalpur Galleria, Faisalabad', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
+  {code:'S2002AMN', name:'Amana Mall, Lahore', cluster:'Closed', clusterManager:'Unassigned', region:'Central', closed:true},
+  {code:'S3009SWT', name:'Blue Area, Swat', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
+  {code:'S3002NCA', name:'Arcard City, Wah', cluster:'Closed', clusterManager:'Unassigned', region:'North', closed:true},
+  {code:'S3006WTC', name:'Giga Mall WTC, Rawalpindi', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
+  {code:'S4006MBH', name:'Jail Road, Mandi Bahauddin', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
+  {code:'S3005RWP', name:'Pindi Saddar, Rawalpindi', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
+  {code:'S4010SGD', name:'Sargodha Store', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
+  {code:'S3003PWD', name:'PWD Islamabad Store', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
+  {code:'S3007ABT', name:'Jhangi Chowk, Abbottabad', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
+  {code:'S3008PEW', name:'University Road, Peshawar', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
+  {code:'S3004RCM', name:'S-Town, Rawalpindi', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
+  {code:'S3001CEN', name:'Centaurus Mall, Islamabad', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
+  {code:'S4014MIR', name:'Dolphin Chowk, Mirpur', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
+  {code:'S5004DMT', name:'DMTR, Karachi', cluster:'S1', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S5009BMH', name:'Autobahn Road, Hyderabad', cluster:'S2', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S5008LUK', name:'Lucky One Mall, Karachi', cluster:'S2', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S5002DMC', name:'DMC, Karachi', cluster:'S1', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S5005GJK', name:'Gulistan-e-Johar, Karachi', cluster:'Closed', clusterManager:'Unassigned', region:'South', closed:true},
+  {code:'S5003DMH', name:'Dolmen Mall Hyderi', cluster:'S2', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S6001FOL', name:'UOL FOL, Lahore', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
+  {code:'S5006KDA', name:'Gulshan KDA, Karachi', cluster:'Closed', clusterManager:'Unassigned', region:'South', closed:true},
+  {code:'S6002FOS', name:'Ferozwatwan FOL, Sheikhpura', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
+  {code:'S5001ATR', name:'Atrium Mall Sadar', cluster:'S1', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S4013JHG', name:'Jhangg Store', cluster:'Franchise', clusterManager:'Unassigned', region:'Central', closed:false},
+  {code:'S6003KBL', name:'Karim Block, Lahore', cluster:'Closed', clusterManager:'Unassigned', region:'Central', closed:true},
+  {code:'S5007KEH', name:'Kehkashan, Karachi', cluster:'Closed', clusterManager:'Unassigned', region:'South', closed:true},
+  {code:'S4007MSQ', name:'Misaq ul Mall, Fasilabad', cluster:'Closed', clusterManager:'Unassigned', region:'Central', closed:true},
+  {code:'S2009LCM', name:'Lake City Mall, Lahore', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
+  {code:'S2010WTL', name:'Wapda Town Lahore', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
+  {code:'S5010SOM', name:'Square One Mall, Karachi', cluster:'S2', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S4016RYK', name:'Rahim Yar Khan Store', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
+  {code:'S5011BHD', name:'Bahadurabad Store', cluster:'S1', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S2011FSM', name:'Fortress Square Mall, Lahore', cluster:'Closed', clusterManager:'Unassigned', region:'Central', closed:true},
+  {code:'S3011SFA', name:'Safa Gold Mall, Islamabad', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
+  {code:'S3010F10', name:'F-10 ISLAMABAD', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
+  {code:'S3012CEN2', name:'Centaurus Mall 2, Islamabad', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
+  {code:'S2012DML', name:'Dolmen Mall Lahore', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
+  {code:'S4019KMG', name:'King Mall Gujranwala', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
+  {code:'S3013F11', name:'F-11 Markaz', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
+  {code:'S3014MPS', name:'Mall of Pindi Saddar', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
+  {code:'S5012HBK', name:'Hyderi Bazar Largesse Karachi', cluster:'S2', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S4021MBH2', name:'Jail Road Mandi Bahauddin-02 Store', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
+  {code:'S3016GGB', name:'Giga Boutique', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
+  {code:'S2013BTL', name:'Bahria Town Lahore', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
+];
+const CLUSTER_MANAGERS = [...new Set(STORES.filter(s=>!s.closed && s.clusterManager!=='Unassigned').map(s=>s.clusterManager))];
+const REGIONS = [...new Set(STORES.map(s=>s.region))];
+// 'fullprice' replaces the former 'creditmemo' compliance bucket at store/cluster
+// workflow level — Full Price Sale Return transactions are now tracked instead of
+// plain Credit Memo settlements (see import classification below).
+const CATEGORY_LABEL = {refund:'Refund Transactions', over30:'Returns Over 30 Days', fullprice:'Full Price Sale Return Transactions'};
+const REASON_OPTIONS = ['Missing Component','Damage Product','Size Issue','Incorrect Charging','Quality Issue','Wrong product punched','Double bill punched','Other'];
+const STATUS_LIST = ['Not Submitted','Awaiting Review','Re-Review','Signed Off'];
+const STORAGE_KEY = 'sapphire-returns-dashboard-v1';
 
-let RAW = { pd: [], pr: [] };
-let FILTERS = { regions:new Set(), cms:new Set(), slabs:new Set() };
-let SORT_PD = { key:'age', dir:'desc' };
-let SORT_PR = { key:'age', dir:'desc' };
-let charts = {};
-let remarksMap = {};
-let validationMap = {}; // transfer no -> { by, at } — cluster manager review status, from live data only
+/* =========================================================
+   BACKEND CONFIG — Google Apps Script Web App
+   -----------------------------------------------------------
+   1. Deploy Code.gs (paired with this file) as a Web App
+      (Extensions > Apps Script > Deploy > New deployment > Web app;
+      Execute as: Me, Who has access: Anyone). Copy the /exec URL.
+   2. Paste that URL below as APPS_SCRIPT_URL.
+   3. Paste the same SHARED_SECRET value you set at the top of
+      Code.gs below — it must match exactly on both sides.
+   ========================================================= */
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdBbcbs5u8905ydzMEhu-SnvkgnT4naDAuIE1u9DLDngBmx9I1dbeis6_L1lrNrmKZ/exec';
+const SHARED_SECRET = 'SapphireRetailSecure#2026X9'; // must match Code.gs
 
-function loadRemarks(){
-  try{ remarksMap = JSON.parse(localStorage.getItem('to_dashboard_remarks') || '{}'); }
-  catch(e){ remarksMap = {}; }
-}
-function saveRemarks(){
-  try{ localStorage.setItem('to_dashboard_remarks', JSON.stringify(remarksMap)); }
-  catch(e){ /* storage unavailable — remarks still work for this session, just won't survive a reload */ }
-}
-loadRemarks();
+function storeByCode(c){ return STORES.find(s=>s.code===c); }
 
-function updateRemark(el){
-  const tn = el.dataset.tn;
-  if(el.value && el.value.trim()!==''){ remarksMap[tn] = el.value; } else { delete remarksMap[tn]; }
-  saveRemarks();
-}
-
-// ---------------- Live data (Google Apps Script backend) ----------------
-// Paste your deployed Apps Script Web App URL (ends in /exec) below before
-// publishing this file to GitHub Pages — every visitor then connects
-// automatically, including store links (?store=CODE), with no manual setup.
-const HARDCODED_API_URL = 'https://script.google.com/macros/s/AKfycbzI4fssOl35Bo3dVG8eM1-A2PTyI8zEkp2EulMExiEsxaJ0ZLmKY_VL8hn1KKXPJl-pGg/exec';
-
-let API_URL = HARDCODED_API_URL;
-try{ API_URL = localStorage.getItem('to_dashboard_api_url') || HARDCODED_API_URL; }catch(e){ API_URL = HARDCODED_API_URL; }
-
-// A URL like dashboard.html?code=P2MTAHB7 locks the whole page to one
-// store's own pending lines only. The code is an opaque, hard-to-guess
-// credential — the actual store it maps to is resolved server-side via the
-// StoreAccess sheet and never exposed back to the browser as a mapping list.
-// Admin controls (upload, publish, filters, charts, exports) are hidden.
-//
-// dashboard.html?admin=ADMIN_KEY reveals the upload/publish/live-data
-// controls. Anyone without that exact key sees a read-only dashboard —
-// this is the same shared-secret caveat as before: fine to stop casual
-// visitors from finding the publish button, not real security since the
-// key sits in this file's source.
-const ADMIN_KEY = 'sapphire-admin-2026';
-
-let LOCKED_ACCESS_CODE = '';
-let LOCKED_CLUSTER_CODE = '';
-let IS_ADMIN = false;
-try{
-  const qs = new URLSearchParams(window.location.search);
-  LOCKED_ACCESS_CODE = (qs.get('code') || '').trim();
-  LOCKED_CLUSTER_CODE = (qs.get('cm') || '').trim();
-  IS_ADMIN = qs.get('admin') === ADMIN_KEY;
-}catch(e){ LOCKED_ACCESS_CODE = ''; LOCKED_CLUSTER_CODE = ''; IS_ADMIN = false; }
-
-function enterStoreMode(storeCode, storeName){
-  document.getElementById('livePanel').style.display = 'none';
-  document.getElementById('adminToolbar').style.display = 'none';
-  document.getElementById('tabsBar').style.display = 'none';
-  document.getElementById('adminOnlySection').style.display = 'none';
-  const banner = document.getElementById('storeBanner');
-  banner.style.display = 'block';
-  banner.innerHTML = 'Store view — ' + storeCode + (storeName ? ' — ' + storeName : '') +
-    '<div class="sub">Showing only this store\'s pending transfer orders. Add remarks against your own lines below.</div>';
-}
-
-function hideAdminControls(){
-  document.getElementById('livePanel').style.display = 'none';
-  document.getElementById('adminToolbar').style.display = 'none';
-}
-
-function getAccessCode(){
-  if(LOCKED_ACCESS_CODE) return LOCKED_ACCESS_CODE;
-  let code = '';
-  try{ code = localStorage.getItem('to_dashboard_access_code') || ''; }catch(e){}
-  if(!code){
-    code = (prompt('Enter your store access code to add remarks:') || '').trim();
-    try{ if(code) localStorage.setItem('to_dashboard_access_code', code); }catch(e){}
-  }
-  return code;
-}
-
-function fetchStoreData(code){
-  if(!API_URL){
-    document.getElementById('errBox').textContent = 'This store link has no live data source configured yet — ask compliance to finish setting up the live dashboard.';
-    document.getElementById('errBox').classList.add('show');
-    return;
-  }
-  fetch(API_URL + '?action=getStoreData&code=' + encodeURIComponent(code))
-    .then(r => r.json())
-    .then(data => {
-      if(data.error){
-        document.getElementById('errBox').textContent = 'That store link isn\'t valid — check the code with compliance.';
-        document.getElementById('errBox').classList.add('show');
-        return;
-      }
-      const rows = (data.rows||[]).map(fromApiRow);
-      ingestRows(rows);
-      const genDate = data.lastUpdated ? new Date(data.lastUpdated) : new Date();
-      enterStoreMode(data.storeCode, data.storeName);
-      activateDashboard(data.storeName || data.storeCode, 0, genDate);
-    })
-    .catch(err => {
-      document.getElementById('errBox').textContent = 'Could not reach the live data source — try again shortly.';
-      document.getElementById('errBox').classList.add('show');
-      console.error('fetchStoreData error', err);
-    });
+/* =========================================================
+   SEED DATA
+   No fake demo rows — the dashboard starts empty and is populated
+   by an Admin uploading a real Return Report (see UPLOAD / IMPORT
+   below). baseTxn() is the shared shape every imported row is built
+   through.
+   ========================================================= */
+function makeSeedTransactions(){
+  return [];
 }
 
-function enterClusterMode(clusterManager){
-  document.getElementById('livePanel').style.display = 'none';
-  document.getElementById('adminToolbar').style.display = 'none';
-  const banner = document.getElementById('storeBanner');
-  banner.style.display = 'block';
-  banner.innerHTML = 'Cluster manager view — ' + clusterManager +
-    '<div class="sub">Showing this cluster\'s stores only. Use the review button on each remark to validate it.</div>';
-}
-
-function fetchClusterData(code){
-  if(!API_URL){
-    document.getElementById('errBox').textContent = 'This cluster link has no live data source configured yet — ask compliance to finish setting up the live dashboard.';
-    document.getElementById('errBox').classList.add('show');
-    return;
-  }
-  fetch(API_URL + '?action=getClusterData&code=' + encodeURIComponent(code))
-    .then(r => r.json())
-    .then(data => {
-      if(data.error){
-        document.getElementById('errBox').textContent = 'That cluster link isn\'t valid — check the code with compliance.';
-        document.getElementById('errBox').classList.add('show');
-        return;
-      }
-      const rows = (data.rows||[]).map(fromApiRow);
-      ingestRows(rows);
-      const genDate = data.lastUpdated ? new Date(data.lastUpdated) : new Date();
-      enterClusterMode(data.clusterManager);
-      activateDashboard(data.clusterManager, 0, genDate);
-    })
-    .catch(err => {
-      document.getElementById('errBox').textContent = 'Could not reach the live data source — try again shortly.';
-      document.getElementById('errBox').classList.add('show');
-      console.error('fetchClusterData error', err);
-    });
-}
-
-function setLiveStatus(text, cls){
-  const el = document.getElementById('liveStatus');
-  if(!el) return;
-  el.textContent = text;
-  el.className = 'live-status' + (cls ? ' '+cls : '');
-}
-
-function connectLive(){
-  const val = (document.getElementById('apiUrlInput').value || '').trim();
-  if(!val){ setLiveStatus('Enter a Web App URL first.', 'err'); return; }
-  API_URL = val;
-  try{ localStorage.setItem('to_dashboard_api_url', API_URL); }catch(e){}
-  fetchLiveData(true);
-}
-
-function toApiRow(r){
+function baseTxn(t){
+  const submitted = t.status !== 'Not Submitted';
   return {
-    Flow: r.flow, TransferNo: r.transfer||'', StoreCode: r.store, StoreName: r.storeName||'',
-    Region: r.region, SubRegion: r.div, Route: r.route, ClusterManager: r.cm,
-    PendingQty: r.qty||0, DrivingDate: r.drivingDate ? fmtDate(r.drivingDate) : '',
-    AgeDays: r.age==null ? '' : r.age, AgeSlab: r.slab
+    id: t.id,
+    category: t.category,            // 'over30' | 'refund' | 'fullprice'
+    storeCode: t.storeCode,
+    transactionNumber: t.transactionNumber,  // the report's distinct Transaction key
+    itemCount: t.itemCount,          // number of line items under this transaction
+    qty: t.qty,                      // summed Return Qty
+    amount: t.amount,                // summed Return Total Amount
+    paymentMethod: t.paymentMethod || '',
+    date: t.date,                    // Return Date, yyyy-mm-dd
+    time: t.time || '',              // Transaction Time, HH:MM (from report column AB)
+    agingDays: t.agingDays ?? null,  // Return Date - Original Date, only set when known
+    priceType: t.priceType || 'N/A', // 'Full Price' | 'Discounted' | 'Mixed' | 'N/A'
+    discountValue: t.discountValue || 0, // sum of (full-price value - actual) across discounted line items
+    barcodes: t.barcodes || [],      // [{barcode, qty, amount, fullPrice}] — line-level detail under this transaction
+    origTransaction: t.origTransaction || '', // Original (sale) transaction number from the report
+    storeApproval: submitted ? true : false,
+    storeRemarks: submitted ? t.storeRemarks || '' : '',
+    // Reason for Return — required before submission, alongside store
+    // remarks. If reason==='Other', reasonRemarks holds the free-text note.
+    reason: t.reason || '',
+    reasonRemarks: t.reasonRemarks || '',
+    clusterRemarks: t.clusterRemarks || '',
+    // reviewHistory: one entry per Cluster Manager decision round.
+    // reviewHistory[0] = "Cluster Review" (first decision: Signed Off or Re-Review).
+    // reviewHistory[1] = "Cluster Manager Review 2" (only exists if round 1 was
+    // Re-Review and the store resubmitted with justification — this is the
+    // Cluster Manager's second look). {round, decision, remarks, by, date}
+    reviewHistory: t.reviewHistory || [],
+    status: t.status,
+    submittedDate: submitted ? t.date : null,
+    reviewedDate: (t.status==='Signed Off'||t.status==='Re-Review') ? t.date : null,
+    lastUpdated: new Date().toISOString(),
+    lastUpdatedBy: submitted ? 'Store Manager' : null,
   };
 }
 
-function fromApiRow(o){
-  const reviveDate = s => {
-    if(!s) return null;
-    const parts = String(s).split('-').map(Number);
-    if(parts.length!==3 || parts.some(isNaN)) return null;
-    return new Date(parts[0], parts[1]-1, parts[2]);
-  };
-  return {
-    flow: o.Flow, transfer: o.TransferNo, store: o.StoreCode, storeName: o.StoreName,
-    region: o.Region, div: o.SubRegion, route: o.Route, cm: o.ClusterManager,
-    qty: Number(o.PendingQty)||0, drivingDate: reviveDate(o.DrivingDate),
-    age: (o.AgeDays==='' || o.AgeDays==null) ? null : Number(o.AgeDays), slab: o.AgeSlab,
-    _remark: o.Remark || '', _validatedBy: o.ValidatedBy || '', _validatedAt: o.ValidatedAt || ''
-  };
-}
+/* =========================================================
+   STATE
+   ========================================================= */
+let DATA = { transactions: [], auditLog: [], uploadLog: [], lastUploadTs: null };
+let screen = 'hq'; // hq | store | cluster | regional | admin
+const OPEN_STORES = STORES.filter(s=>!s.closed);
+let storeAuth = { unlocked:false, storeCode: OPEN_STORES[0].code, password:'' };
+let clusterAuth = { unlocked:false, clusterManager: CLUSTER_MANAGERS[0], passcode:'' };
+// Admin login now validates server-side against the Credentials sheet via
+// Code.gs — no admin password is stored in this file. See verifyLogin() below.
+let adminAuth = { unlocked:false };
+let adminSubView = 'upload'; // upload | audit
+let ctx = { region: REGIONS[0] };
+let editingActive = false;
+function statusBucket(status){ return status==='Signed Off' ? 'Signed Off' : status==='Not Submitted' ? 'Not Started' : 'Open Items'; }
+let lastLoadedTs = null;
+const REFRESH_INTERVAL_SECONDS = 60; // 1 minute, per request
+let nextRefreshIn = REFRESH_INTERVAL_SECONDS;
+let regionalAuth = { unlocked:false, region: REGIONS[0] };
 
-function ingestRows(rows){
-  RAW.pd = rows.filter(r=>r.flow==='Pending Dispatch');
-  RAW.pr = rows.filter(r=>r.flow==='Pending Receiving');
-  rows.forEach(r=>{
-    if(r._remark){ remarksMap[r.transfer] = r._remark; }
-    validationMap[r.transfer] = { by: r._validatedBy, at: r._validatedAt };
-  });
-  saveRemarks();
-}
-
-function fetchLiveData(userInitiated){
-  if(!API_URL){ setLiveStatus('Not connected — showing local upload mode.'); return; }
-  document.getElementById('apiUrlInput').value = API_URL;
-  setLiveStatus('Loading live data…');
-  fetch(API_URL + '?action=getData')
-    .then(r => r.json())
-    .then(data => {
-      const rows = (data.rows||[]).map(fromApiRow);
-      ingestRows(rows);
-      const genDate = data.lastUpdated ? new Date(data.lastUpdated) : new Date();
-      activateDashboard('Live dashboard', 0, genDate);
-      const badge = document.getElementById('recordCountTop');
-      if(badge) badge.textContent = (RAW.pd.length+RAW.pr.length) + ' pending lines — live, last published ' + genDate.toLocaleString();
-      setLiveStatus('Connected — ' + rows.length + ' lines loaded.', 'ok');
-    })
-    .catch(err => {
-      setLiveStatus('Could not reach that URL — check it\'s deployed with "Anyone" access.', 'err');
-      if(userInitiated) console.error('fetchLiveData error', err);
-    });
-}
-
-function publishToLive(){
-  if(!API_URL){ alert('Connect a live data source first (top of the page) before publishing.'); return; }
-  if(!RAW.pd.length && !RAW.pr.length){ alert('Upload a workbook first — nothing to publish yet.'); return; }
-  const rows = RAW.pd.concat(RAW.pr).map(toApiRow);
-  setLiveStatus('Publishing…');
-  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'uploadData', rows }) })
-    .then(r => r.json())
-    .then(res => {
-      if(res.success){ setLiveStatus('Published ' + res.count + ' lines live.', 'ok'); }
-      else{ setLiveStatus('Publish failed: ' + (res.message||'unknown error'), 'err'); }
-    })
-    .catch(err => { setLiveStatus('Publish failed — network or URL error.', 'err'); console.error('publishToLive error', err); });
-}
-
-function submitRemarkToLive(el){
-  if(!API_URL) return;
-  const tn = el.dataset.tn;
-  const value = el.value;
-  if(!value || !value.trim()) return; // don't prompt for a code just to clear a remark
-  const code = getAccessCode();
-  if(!code){
-    alert('An access code is required to save remarks — this remark was kept on your screen but not saved to the live sheet.');
-    return;
+/* =========================================================
+   STORAGE — Google Apps Script Web App is now the source of
+   truth (Google Sheet "DataStore" tab). See Code.gs.
+   ========================================================= */
+async function fetchDataFromBackend(){
+  try{
+    // cache:'no-store' + a timestamp query param stop the browser from
+    // silently replaying a cached response on refresh instead of actually
+    // asking Apps Script again.
+    const res = await fetch(APPS_SCRIPT_URL + '?action=load&_=' + Date.now(), { cache:'no-store' });
+    const json = await res.json();
+    if(json && json.ok) return json.data;
+    showToast('Backend returned an error loading data.', 5000);
+  }catch(e){
+    showToast('Could not reach the backend — check APPS_SCRIPT_URL. ('+(e.message||e)+')', 6000);
   }
-  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'submitRemark', transferNo:tn, remark:value, accessCode: code }) })
-    .then(r => r.json())
-    .then(res => {
-      if(!res.success){
-        console.warn('Remark submit failed', res);
-        alert('Could not save that remark: ' + (res.message||'rejected by server') + '. This usually means the code is wrong, or this transfer order does not belong to your store.');
-      }
-    })
-    .catch(err => console.warn('Remark submit error', err));
+  return null;
 }
-
-function validateRemarkLive(tn, btn){
-  if(!API_URL || !LOCKED_CLUSTER_CODE) return;
-  btn.disabled = true;
-  btn.textContent = 'Reviewing…';
-  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'validateRemark', transferNo:tn, clusterCode: LOCKED_CLUSTER_CODE }) })
-    .then(r => r.json())
-    .then(res => {
-      if(res.success){
-        validationMap[tn] = { by: 'pending-refresh', at: new Date().toISOString() };
-        applyFilters(); // re-render with the now-reviewed status shown
-      } else {
-        btn.disabled = false;
-        btn.textContent = 'Review';
-        alert('Could not mark this reviewed: ' + (res.message||'rejected by server'));
-      }
-    })
-    .catch(err => {
-      btn.disabled = false;
-      btn.textContent = 'Review';
-      console.warn('validateRemarkLive error', err);
+async function loadData(){
+  const data = await fetchDataFromBackend();
+  if(data) return data;
+  // Empty-seed fallback is only appropriate on the very first load, when
+  // there's no existing dashboard state to protect. See the auto-refresh
+  // handler below for why a failed refresh must NOT reach this path.
+  return { transactions: makeSeedTransactions(), auditLog: [
+    {timestamp:new Date().toISOString(), user:'System', role:'System', action:'Backend unreachable — showing empty local state', transaction:'—', prevStatus:'—', newStatus:'—', remarks:''}
+  ], uploadLog: [], lastUploadTs: null };
+}
+async function saveData(data){
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, // plain text avoids a CORS preflight Apps Script can't answer
+      body: JSON.stringify({ action:'save', secret: SHARED_SECRET, data })
     });
-}
-
-// Minimal CSV line parser handling quoted fields with embedded commas/quotes.
-function parseCSV(text){
-  const rows = [];
-  let row = [], field = '', inQuotes = false;
-  for(let i=0;i<text.length;i++){
-    const c = text[i];
-    if(inQuotes){
-      if(c==='"'){
-        if(text[i+1]==='"'){ field+='"'; i++; } else { inQuotes=false; }
-      } else { field += c; }
-    } else {
-      if(c==='"'){ inQuotes = true; }
-      else if(c===','){ row.push(field); field=''; }
-      else if(c==='\n' || c==='\r'){
-        if(field!=='' || row.length){ row.push(field); rows.push(row); row=[]; field=''; }
-        if(c==='\r' && text[i+1]==='\n') i++;
-      } else { field += c; }
+    const json = await res.json();
+    if(!json || !json.ok){
+      // The request reached Apps Script but was rejected (e.g. SHARED_SECRET
+      // mismatch) — this used to fail silently, leaving the change only in
+      // this browser's memory until the next refresh wiped it out. Now it's
+      // surfaced loudly instead, because a compliance tool silently losing
+      // submitted data is worse than an ugly error message.
+      showToast('SAVE REJECTED BY BACKEND — this change was NOT written to the Sheet and will be lost on refresh. ('+(json&&json.error?json.error:'unknown error')+')', 8000);
+      return false;
     }
+    return true;
+  }catch(e){
+    showToast('Save failed — changes may not persist. ('+(e.message||e)+')', 8000);
+    return false;
   }
-  if(field!=='' || row.length){ row.push(field); rows.push(row); }
-  return rows;
+}
+// Server-side credential check. role: 'store' | 'cluster' | 'regional' | 'admin'.
+// identifier: store code / cluster manager name / region name / admin username.
+async function verifyLogin(role, identifier, password){
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'login', secret: SHARED_SECRET, role, identifier, password })
+    });
+    const json = await res.json();
+    return !!(json && json.ok);
+  }catch(e){
+    showToast('Could not reach the backend to verify login. ('+(e.message||e)+')', 6000);
+    return false;
+  }
+}
+function addAudit(entry){
+  DATA.auditLog.unshift(Object.assign({timestamp:new Date().toISOString()}, entry));
+  if(DATA.auditLog.length>500) DATA.auditLog.length = 500;
 }
 
-document.getElementById('importRemarksInput').addEventListener('change', function(e){
-  const f = e.target.files[0];
-  if(!f) return;
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function money(n){ return 'Rs ' + Number(n||0).toLocaleString('en-PK',{maximumFractionDigits:0}); }
+function fmtDate(d){ if(!d) return '—'; const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDateTime(iso){ const dt=new Date(iso); return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function fmtBarcodes(list){
+  if(!list || !list.length) return '—';
+  const shown = list.slice(0,3).map(b=>esc(b.barcode)+(b.qty>1?` (x${b.qty})`:''));
+  const extra = list.length>3 ? ` <span class="mono">+${list.length-3} more</span>` : '';
+  return `<span class="mono">${shown.join(', ')}</span>${extra}`;
+}
+function badge(status){
+  const map={'Not Submitted':'st-not','Awaiting Review':'st-await','Re-Review':'st-rereview','Signed Off':'st-signed'};
+  return `<span class="badge ${map[status]||'st-not'}">${esc(status)}</span>`;
+}
+function txnsFor(filterFn){ return DATA.transactions.filter(filterFn); }
+function showToast(msg, ms=3200){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.remove('hide');
+  clearTimeout(showToast._h);
+  showToast._h=setTimeout(()=>t.classList.add('hide'), ms);
+}
+
+/* =========================================================
+   RENDER: SHELL
+   ========================================================= */
+const NAV_ITEMS = [
+  ['hq','HQ Dashboard'],
+  ['store','Store Entry'],
+  ['cluster','Cluster Review'],
+  ['regional','Regional Manager Insights'],
+];
+
+function renderShell(){
+  const tabBar = document.getElementById('tabBar');
+  tabBar.innerHTML = NAV_ITEMS.map(([id,label])=>`<button data-nav="${id}" class="${screen===id?'active':''}">${esc(label)}</button>`).join('');
+  tabBar.querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{ screen=b.dataset.nav; render(); };
+  });
+  renderClock();
+}
+
+function renderClock(){
+  const box = document.getElementById('clockBox');
+  const ts = lastLoadedTs ? fmtDateTime(lastLoadedTs).split(' ').pop() + ', ' + fmtDateTime(lastLoadedTs) : '—';
+  const mm = String(Math.floor(nextRefreshIn/60)).padStart(2,'0');
+  const ss = String(nextRefreshIn%60).padStart(2,'0');
+  box.innerHTML = `Last updated: <b>${lastLoadedTs? fmtDateTime(lastLoadedTs):'—'}</b> · Next refresh in <b>${mm}:${ss}</b>`;
+}
+
+/* =========================================================
+   RENDER: MAIN ROUTER
+   ========================================================= */
+function render(){
+  renderShell();
+  const main = document.getElementById('mainArea');
+  // Admin, once logged in, can open any Store / Cluster / Regional tab
+  // without a second password — that's the whole point of being Admin.
+  // A default selection is picked automatically the first time so the
+  // view has something to show; each view exposes its own selector (see
+  // renderStoreView / renderClusterView) so Admin can switch between
+  // stores/managers/regions without ever hitting a login gate.
+  if(adminAuth.unlocked){
+    if(!storeAuth.storeCode) storeAuth.storeCode = STORES.filter(s=>!s.closed)[0].code;
+    storeAuth.unlocked = true;
+    if(!clusterAuth.clusterManager) clusterAuth.clusterManager = CLUSTER_MANAGERS[0];
+    clusterAuth.unlocked = true;
+    regionalAuth.unlocked = true;
+  }
+  if(screen==='store') main.innerHTML = storeAuth.unlocked ? renderStoreView() : renderStoreLogin();
+  else if(screen==='cluster') main.innerHTML = clusterAuth.unlocked ? renderClusterView() : renderClusterLogin();
+  else if(screen==='regional') main.innerHTML = regionalAuth.unlocked ? renderRegionalView() : renderRegionalLogin();
+  else if(screen==='hq') main.innerHTML = renderHQView();
+  else if(screen==='admin') main.innerHTML = adminAuth.unlocked ? renderAdminView() : renderAdminLogin();
+  bindDynamicHandlers();
+}
+
+/* =========================================================
+   LOGIN GATES
+   ========================================================= */
+function renderStoreLogin(){
+  const sel = storeAuth.storeCode;
+  const store = storeByCode(sel);
+  return `
+    <div class="login-gate">
+      <div class="lockicon">🔒</div>
+      <h1>Store Entry</h1>
+      <p>Select your store and enter your store password to view and submit today's return transactions.</p>
+      <span class="field-label">Select your store</span>
+      <select id="loginStoreSelect">${OPEN_STORES.map(s=>`<option value="${s.code}" ${sel===s.code?'selected':''}>${esc(s.name)} (${esc(s.code)})</option>`).join('')}</select>
+      <span class="field-label">Cluster Manager (auto)</span>
+      <div class="auto-field">${esc(store.clusterManager)} · ${esc(store.cluster)}</div>
+      <span class="field-label">Store password</span>
+      <input type="text" id="loginStorePass" placeholder="Enter your store password">
+      <button class="btn" id="storeUnlockBtn">Unlock</button>
+    </div>`;
+}
+function renderClusterLogin(){
+  const sel = clusterAuth.clusterManager;
+  return `
+    <div class="login-gate">
+      <div class="lockicon">🔒</div>
+      <h1>Cluster Review</h1>
+      <p>Select your name and enter your review passcode. You'll see only your assigned stores.</p>
+      <span class="field-label">Reviewing as</span>
+      <select id="loginClusterSelect">${CLUSTER_MANAGERS.map(m=>`<option value="${esc(m)}" ${sel===m?'selected':''}>${esc(m)}</option>`).join('')}</select>
+      <span class="field-label">Passcode</span>
+      <input type="text" id="loginClusterPass" placeholder="Enter your cluster manager passcode">
+      <button class="btn" id="clusterUnlockBtn">Unlock</button>
+    </div>`;
+}
+
+function renderRegionalLogin(){
+  const sel = regionalAuth.region;
+  return `
+    <div class="login-gate">
+      <div class="lockicon">🔒</div>
+      <h1>Regional Manager Insights</h1>
+      <p>Select your region and enter your access passcode.</p>
+      <span class="field-label">Region</span>
+      <select id="loginRegionalSelect">${REGIONS.map(r=>`<option value="${esc(r)}" ${sel===r?'selected':''}>${esc(r)}</option>`).join('')}</select>
+      <span class="field-label">Passcode</span>
+      <input type="text" id="loginRegionalPass" placeholder="Enter your regional manager passcode">
+      <button class="btn" id="regionalUnlockBtn">Unlock</button>
+    </div>`;
+}
+
+function renderAdminLogin(){
+  return `
+    <div class="login-gate">
+      <div class="lockicon">🔒</div>
+      <h1>Admin Login</h1>
+      <p>Restricted to system administrators. This tab is not shown to store, cluster or regional users.</p>
+      <span class="field-label">Username</span>
+      <input type="text" id="loginAdminUser" placeholder="Admin username">
+      <span class="field-label">Password</span>
+      <input type="text" id="loginAdminPass" placeholder="Admin password">
+      <button class="btn" id="adminUnlockBtn">Unlock</button>
+    </div>`;
+}
+
+/* =========================================================
+   STORE VIEW
+   ========================================================= */
+function renderStoreView(){
+  const store = storeByCode(storeAuth.storeCode);
+  const mine = txnsFor(t=>t.storeCode===store.code);
+  const dates = [...new Set(mine.map(t=>t.date))].sort();
+  const draftCount = mine.filter(t=>t.status==='Not Submitted').length;
+  const approvedDraftCount = mine.filter(t=>t.status==='Not Submitted' && t.storeApproval).length;
+  const reReviewCount = mine.filter(t=>t.status==='Re-Review').length;
+
+  const categories = ['over30','refund','fullprice'];
+  const tables = categories.map(cat=>{
+    const rows = mine.filter(t=>t.category===cat).sort((a,b)=>a.date<b.date?1:-1);
+    return renderStoreCategoryTable(cat, rows, store);
+  }).join('');
+
+  return `
+    <div class="session-bar">
+      <span>Signed in as <b>${esc(store.name)}</b></span>
+      ${adminAuth.unlocked
+        ? `<select id="adminStoreSwitch" style="margin-left:10px;">${STORES.filter(s=>!s.closed).map(s=>`<option value="${s.code}" ${s.code===store.code?'selected':''}>${esc(s.name)}</option>`).join('')}</select>`
+        : `<a id="storeLockBtn">Lock / switch store</a>`
+      }
+    </div>
+    <div class="panel-head">
+      <div>
+        <h1>${esc(store.name)} — Store Entry</h1>
+        <p>${esc(store.cluster)} · Cluster Manager: ${esc(store.clusterManager)} · ${esc(store.region)}</p>
+      </div>
+      <div id="submitControls">
+        ${draftCount>0 ? renderSubmitControlsInner(approvedDraftCount) : ''}
+      </div>
+    </div>
+    ${reReviewCount>0 ? `<div class="warn-box">${reReviewCount} transaction(s) sent back by the Cluster Manager for re-review — see remarks below and respond.</div>` : ''}
+    <div class="note-box">Core transaction fields (Transaction, Items, Qty, Amount, Payment Method, Date, Barcodes) are populated from the Admin-uploaded Return Report and are always read-only here. Manager must tick "Is Approved by Manager" and add remarks before submitting a draft.</div>
+    ${tables}
+  `;
+}
+
+function renderSubmitControlsInner(approvedDraftCount){
+  return `<button class="btn" id="submitAllBtn" ${approvedDraftCount===0?'disabled':''}>Submit ${approvedDraftCount} approved draft item(s) for Cluster Review</button>
+    ${approvedDraftCount===0 ? `<div class="locked-note" style="margin-top:5px;">Tick "Is Approved by Manager" on at least one draft below to enable submission.</div>` : ''}`;
+}
+
+// Line-level detail: one row per barcode/line-item, not per transaction.
+// Approval / remarks / status / review columns are transaction-level and are
+// only shown on the first line of each transaction (idx===0) to avoid
+// repeating editable controls, but they carry the same transaction id so a
+// multi-line transaction is still approved/remarked as one unit.
+function flattenToLines(rows){
+  const lines = [];
+  rows.forEach(t=>{
+    const items = (t.barcodes && t.barcodes.length) ? t.barcodes : [{barcode:'—', qty:t.qty, amount:t.amount, fullPrice:null}];
+    items.forEach((b,idx)=> lines.push({t, b, idx}));
+  });
+  return lines;
+}
+
+function renderStoreCategoryTable(cat, rows, store){
+  const cols = ['Return Date','Time','Transaction No.','Barcode','Return Qty','Return Amount','Payment Method']
+    .concat(cat==='over30' ? ['Aging (days)'] : [])
+    .concat(['Price Type','Original Transaction','Is Approved by Manager','Reason for Return','Store Remarks','Status','Cluster Review','Cluster Manager Review 2']);
+
+  const lines = flattenToLines(rows);
+
+  const body = lines.length ? lines.map(({t,b,idx})=>{
+    const editable = t.status==='Not Submitted';
+    const respondable = t.status==='Re-Review';
+    const priceTypeLine = b.fullPrice===true ? 'Full Price' : b.fullPrice===false ? 'Discounted' : t.priceType;
+    return `<tr>
+      <td>${fmtDate(t.date)}</td>
+      <td class="mono">${esc(t.time)||"—"}</td>
+      <td class="mono">${esc(t.transactionNumber)}</td>
+      <td class="mono">${esc(b.barcode)}</td>
+      <td class="num-cell">${b.qty}</td>
+      <td class="num-cell">${money(b.amount!=null?b.amount:t.amount)}</td>
+      <td>${esc(t.paymentMethod||'—')}</td>
+      ${cat==='over30' ? `<td class="num-cell">${t.agingDays==null?'—':t.agingDays}</td>` : ''}
+      <td>${esc(priceTypeLine)}</td>
+      <td class="mono">${esc(t.origTransaction||'—')}</td>
+      <td>${idx!==0 ? '' : (editable ? `<input type="checkbox" data-approve="${t.id}" ${t.storeApproval?'checked':''}>` : (t.storeApproval? '✓':'—'))}</td>
+      <td style="min-width:170px;">${idx!==0 ? '' : reasonCell(t, editable)}</td>
+      <td style="min-width:200px;">${idx!==0 ? '' : (
+        editable
+          ? `<textarea data-remark="${t.id}" placeholder="Store remarks...">${esc(t.storeRemarks)}</textarea>`
+          : respondable
+            ? `<div class="remark-locked" style="margin-bottom:5px;"><b>Cluster Manager:</b> ${esc(t.clusterRemarks)}</div><textarea data-respond="${t.id}" placeholder="Your response...">${esc(t.storeRemarks)}</textarea>`
+            : `<div class="remark-locked">${esc(t.storeRemarks)||'—'}</div>`
+      )}</td>
+      <td>${idx!==0 ? '' : (badge(t.status)+(respondable?`<div style="margin-top:6px;"><button class="btn sm" data-resubmit="${t.id}">Resubmit</button></div>`:''))}</td>
+      <td style="min-width:160px;">${idx!==0 ? '' : reviewRoundCell(t,1)}</td>
+      <td style="min-width:160px;">${idx!==0 ? '' : reviewRoundCell(t,2)}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="${cols.length}" class="empty">No transactions in this category.</td></tr>`;
+
+  return `
+    <div class="card">
+      <div class="card-head"><h2>${CATEGORY_LABEL[cat]}</h2><span class="count">${rows.length} transaction(s)</span></div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table>
+      </div>
+    </div>`;
+}
+
+// Reason for Return cell: a dropdown when editable, plus a free-text box
+// that only appears when "Other" is selected. Locked to plain text once the
+// transaction is submitted, same as Store Remarks.
+function reasonCell(t, editable){
+  if(!editable){
+    const label = t.reason==='Other' ? `Other — ${esc(t.reasonRemarks)||'(no remarks)'}` : (t.reason||'—');
+    return `<div class="remark-locked">${esc(label)}</div>`;
+  }
+  return `
+    <select data-reason="${t.id}">
+      <option value="">Select reason...</option>
+      ${REASON_OPTIONS.map(r=>`<option value="${esc(r)}" ${t.reason===r?'selected':''}>${esc(r)}</option>`).join('')}
+    </select>
+    ${t.reason==='Other' ? `<textarea data-reasonremarks="${t.id}" placeholder="Remarks for Other..." style="margin-top:6px;">${esc(t.reasonRemarks)}</textarea>` : ''}
+  `;
+}
+
+/* =========================================================
+   CLUSTER MANAGER VIEW
+   ========================================================= */
+function renderClusterView(){
+  const mgr = clusterAuth.clusterManager;
+  const stores = STORES.filter(s=>s.clusterManager===mgr);
+  const codes = stores.map(s=>s.code);
+  const all = txnsFor(t=>codes.includes(t.storeCode));
+  const f = clusterFilters;
+  // Date range applies to the Store Summary counts (historical reporting)
+  // only — the Review Queue below always shows every pending item
+  // regardless of date, so nothing awaiting action can get hidden by a
+  // filter someone forgot was set.
+  const summaryScope = all.filter(t=>{
+    if(f.dateFrom && t.date<f.dateFrom) return false;
+    if(f.dateTo && t.date>f.dateTo) return false;
+    return true;
+  });
+
+  const summaryRows = stores.map(s=>{
+    const ts = summaryScope.filter(t=>t.storeCode===s.code);
+    const c = st => ts.filter(t=>t.status===st).length;
+    // Per-category performance — distinct transaction count, summed Return
+    // Qty, and summed compliance Value — same category stats used in the
+    // Cluster/Regional/HQ KPI rows (clusterKpiRow), just scoped to one store.
+    const cat = code => { const g = ts.filter(t=>t.category===code); return {count:g.length, qty:g.reduce((s,t)=>s+t.qty,0), amt:g.reduce((s,t)=>s+t.amount,0)}; };
+    const refund=cat('refund'), over30=cat('over30'), fullprice=cat('fullprice');
+    return `<tr>
+      <td>${esc(s.name)}</td>
+      <td class="num-cell">${refund.count}</td><td class="num-cell">${refund.qty}</td><td class="num-cell">${money(refund.amt)}</td>
+      <td class="num-cell">${over30.count}</td><td class="num-cell">${over30.qty}</td><td class="num-cell">${money(over30.amt)}</td>
+      <td class="num-cell">${fullprice.count}</td><td class="num-cell">${fullprice.qty}</td><td class="num-cell">${money(fullprice.amt)}</td>
+      <td class="num-cell">${c('Signed Off')}</td>
+      <td class="num-cell">${c('Awaiting Review')}</td>
+      <td class="num-cell">${c('Re-Review')}</td>
+      <td class="num-cell">${c('Not Submitted')}</td>
+    </tr>`;
+  }).join('');
+
+  const queue = all.filter(t=>t.status==='Awaiting Review').sort((a,b)=>a.date<b.date?1:-1);
+  const queueLines = flattenToLines(queue);
+  const QUEUE_COLS = 17;
+
+  const queueRows = queueLines.length ? queueLines.map(({t,b,idx})=>{
+    const store = storeByCode(t.storeCode);
+    const priceTypeLine = b.fullPrice===true ? 'Full Price' : b.fullPrice===false ? 'Discounted' : t.priceType;
+    return `<tr>
+      <td>${idx!==0?'':esc(store.name)}</td>
+      <td>${fmtDate(t.date)}</td>
+      <td class="mono">${esc(t.time)||"—"}</td>
+      <td class="mono">${esc(t.transactionNumber)}</td>
+      <td class="mono">${esc(b.barcode)}</td>
+      <td class="num-cell">${b.qty}</td>
+      <td class="num-cell">${money(b.amount!=null?b.amount:t.amount)}</td>
+      <td>${esc(t.paymentMethod||'—')}</td>
+      <td>${esc(priceTypeLine)}</td>
+      <td class="mono">${esc(t.origTransaction||'—')}</td>
+      <td>${idx!==0?'':esc(t.reason==='Other'?`Other — ${t.reasonRemarks||'(no remarks)'}`:(t.reason||'—'))}</td>
+      <td>${idx!==0?'':`<div class="remark-locked">${esc(t.storeRemarks)||'—'}</div>`}</td>
+      <td>${idx!==0?'':badge(t.status)}</td>
+      <td style="min-width:160px;">${idx!==0?'':reviewRoundCell(t,1)}</td>
+      <td style="min-width:160px;">${idx!==0?'':reviewRoundCell(t,2)}</td>
+      <td style="min-width:200px;">${idx!==0?'':`<textarea data-clusterremark="${t.id}" placeholder="Cluster Manager remarks...">${esc(t.clusterRemarks)}</textarea>`}</td>
+      <td style="white-space:nowrap;">${idx!==0?'':`
+        <button class="btn sm" data-signoff="${t.id}">Sign Off</button>
+        <button class="btn sm danger" data-rereview="${t.id}">Re-Review</button>
+      `}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="${QUEUE_COLS}" class="empty">No transactions awaiting review.</td></tr>`;
+
+  return `
+    <div class="session-bar">
+      <span>Reviewing as <b>${esc(mgr)}</b></span>
+      ${adminAuth.unlocked
+        ? `<select id="adminClusterSwitch" style="margin-left:10px;">${CLUSTER_MANAGERS.map(m=>`<option value="${esc(m)}" ${m===mgr?'selected':''}>${esc(m)}</option>`).join('')}</select>`
+        : `<a id="clusterLockBtn">Lock / switch manager</a>`
+      }
+    </div>
+    <div class="panel-head">
+      <div><h1>Cluster Review — ${esc(mgr)}</h1><p>${stores.map(s=>s.name).join(', ')}</p></div>
+    </div>
+    <div class="filters-grid" style="max-width:420px;">
+      <div><span class="field-label">From date</span><input type="date" id="cFDateFrom" value="${f.dateFrom||''}"></div>
+      <div><span class="field-label">To date</span><input type="date" id="cFDateTo" value="${f.dateTo||''}"></div>
+      <div style="align-self:end;"><button class="btn sm secondary" id="cFClearBtn">Clear dates</button></div>
+    </div>
+    <div class="locked-note" style="margin:4px 0 12px;">${(f.dateFrom||f.dateTo) ? `Store Summary below is showing ${f.dateFrom?fmtDate(f.dateFrom):'the beginning'} through ${f.dateTo?fmtDate(f.dateTo):'today'}.` : 'Store Summary below is the full cumulative total across every day currently loaded.'} The Review Queue always shows every pending item regardless of this filter.</div>
+    <div class="card">
+      <div class="card-head"><h2>Store Summary</h2></div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table class="compact-table"><thead><tr><th>Store</th><th>Refund Txns</th><th>Refund Qty</th><th>Refund Value</th><th>Return&gt;30 Txns</th><th>Return&gt;30 Qty</th><th>Return&gt;30 Value</th><th>Full Price Txns</th><th>Full Price Qty</th><th>Full Price Value</th><th>Signed Off</th><th>Awaiting</th><th>Re-Review</th><th>Not Submitted</th></tr></thead>
+        <tbody>${summaryRows}</tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Review Queue</h2><span class="count">${queue.length} awaiting</span></div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table><thead><tr><th>Store</th><th>Return Date</th><th>Time</th><th>Transaction No.</th><th>Barcode</th><th>Return Qty</th><th>Return Amount</th><th>Payment Method</th><th>Price Type</th><th>Original Transaction</th><th>Reason for Return</th><th>Store Remarks</th><th>Status</th><th>Cluster Review</th><th>Cluster Manager Review 2</th><th>Cluster Remarks (this round)</th><th>Action</th></tr></thead>
+        <tbody>${queueRows}</tbody></table>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================
+   REGIONAL VIEW
+   ========================================================= */
+function clusterKpiRow(mgr, stores, txns){
+  // Headline number is distinct TRANSACTION COUNT, not item Qty — a
+  // transaction can carry several line items, so Qty (10) and Txn Count (7)
+  // are genuinely different numbers (matches the skill's own "Txn Count" vs
+  // "Qty" distinction). Showing Qty as the big number was being read as
+  // transaction count and looked wrong against the skill's workbook.
+  const c = cat => { const ts = txns.filter(t=>t.category===cat); return {count:ts.length, qty:ts.reduce((s,t)=>s+t.qty,0), amt:ts.reduce((s,t)=>s+t.amount,0)}; };
+  const refund=c('refund'), over30=c('over30'), fullprice=c('fullprice');
+  const bucket = b => txns.filter(t=>statusBucket(t.status)===b).length;
+  return `<tr>
+    <td>${esc(mgr)}</td>
+    <td class="num-cell">${stores.length}</td>
+    <td class="num-cell">${refund.count}</td><td class="num-cell">${money(refund.amt)}</td>
+    <td class="num-cell">${over30.count}</td><td class="num-cell">${money(over30.amt)}</td>
+    <td class="num-cell">${fullprice.count}</td><td class="num-cell">${money(fullprice.amt)}</td>
+    <td class="num-cell">${bucket('Signed Off')}</td>
+    <td class="num-cell">${bucket('Not Started')}</td>
+    <td class="num-cell">${bucket('Open Items')}</td>
+  </tr>`;
+}
+const CLUSTER_TABLE_HEAD = `<tr><th>Cluster Manager</th><th>Stores</th><th>Refund Txns</th><th>Refund Amt</th><th>Return&gt;30 Txns</th><th>Return&gt;30 Amt</th><th>Full Price Return Txns</th><th>Full Price Return Amt</th><th>Signed Off</th><th>Not Started</th><th>Open Items</th></tr>`;
+
+function renderRegionalView(){
+  const region = ctx.region;
+  const stores = STORES.filter(s=>s.region===region);
+  // Unassigned (closed-store placeholder) is not a real cluster manager and
+  // is excluded from the summary — it would otherwise show as a phantom row.
+  const mgrs = [...new Set(stores.map(s=>s.clusterManager))].filter(m=>m!=='Unassigned');
+  const f = regionalFilters;
+
+  const rows = mgrs.map(m=>{
+    const mgrStores = stores.filter(s=>s.clusterManager===m);
+    const codes = mgrStores.map(s=>s.code);
+    const ts = txnsFor(t=>{
+      if(!codes.includes(t.storeCode)) return false;
+      if(f.dateFrom && t.date<f.dateFrom) return false;
+      if(f.dateTo && t.date>f.dateTo) return false;
+      return true;
+    });
+    return clusterKpiRow(m, mgrStores, ts);
+  }).join('');
+
+  return `
+    <div class="session-bar"><span>Signed in for <b>${esc(region)}</b></span><a id="regionalLockBtn">Lock / switch region</a></div>
+    <div class="panel-head">
+      <div><h1>Regional Manager Insights</h1><p>${stores.length} stores · ${mgrs.length} cluster manager(s) in ${esc(region)}</p></div>
+      <div><span class="field-label">Region</span><select id="regionSelect">${REGIONS.map(r=>`<option ${region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div>
+    </div>
+    <div class="filters-grid" style="max-width:420px;">
+      <div><span class="field-label">From date</span><input type="date" id="rFDateFrom" value="${f.dateFrom||''}"></div>
+      <div><span class="field-label">To date</span><input type="date" id="rFDateTo" value="${f.dateTo||''}"></div>
+      <div style="align-self:end;"><button class="btn sm secondary" id="rFClearBtn">Clear dates</button></div>
+    </div>
+    <div class="locked-note" style="margin:4px 0 12px;">${(f.dateFrom||f.dateTo) ? `Showing ${f.dateFrom?fmtDate(f.dateFrom):'the beginning'} through ${f.dateTo?fmtDate(f.dateTo):'today'}.` : 'Showing the full cumulative total across every day currently loaded.'}</div>
+    <div class="card">
+      <div class="card-head"><h2>Cluster Manager Summary — ${esc(region)}</h2></div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table class="compact-table"><thead>${CLUSTER_TABLE_HEAD}</thead><tbody>${rows}</tbody></table>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================
+   HQ VIEW
+   ========================================================= */
+function renderHQView(){
+  const f = getHqFilters();
+  const filtered = DATA.transactions.filter(t=>{
+    const store = storeByCode(t.storeCode);
+    if(f.region!=='all' && store.region!==f.region) return false;
+    if(f.dateFrom && t.date<f.dateFrom) return false;
+    if(f.dateTo && t.date>f.dateTo) return false;
+    return true;
+  });
+
+  const bucket = b => filtered.filter(t=>statusBucket(t.status)===b).length;
+  const catKpi = cat=>{
+    const ts = filtered.filter(t=>t.category===cat);
+    return {count:ts.length, qty:ts.reduce((s,t)=>s+t.qty,0), amt:ts.reduce((s,t)=>s+t.amount,0)};
+  };
+  const refund=catKpi('refund'), over30=catKpi('over30'), fullprice=catKpi('fullprice');
+
+  const regionsInScope = f.region==='all' ? REGIONS : [f.region];
+  // Unassigned (closed-store placeholder) is not a real cluster manager and
+  // is excluded from the summary — it would otherwise show as a phantom row.
+  const mgrsInScope = [...new Set(STORES.filter(s=>regionsInScope.includes(s.region)).map(s=>s.clusterManager))].filter(m=>m!=='Unassigned');
+  const clusterRows = mgrsInScope.map(m=>{
+    const mgrStores = STORES.filter(s=>s.clusterManager===m);
+    const codes = mgrStores.map(s=>s.code);
+    const ts = filtered.filter(t=>codes.includes(t.storeCode));
+    return clusterKpiRow(m, mgrStores, ts);
+  }).join('');
+
+  return `
+    <div class="panel-head"><div><h1>HQ Dashboard</h1><p>Consolidated organization-wide compliance position</p></div></div>
+
+    <div class="filters-grid" style="max-width:560px;">
+      <div><span class="field-label">From date</span><input type="date" id="fDateFrom" value="${f.dateFrom||''}"></div>
+      <div><span class="field-label">To date</span><input type="date" id="fDateTo" value="${f.dateTo||''}"></div>
+      <div><span class="field-label">Region</span><select id="fRegion"><option value="all">All regions</option>${REGIONS.map(r=>`<option ${f.region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div>
+      <div style="align-self:end;"><button class="btn sm secondary" id="fClearBtn">Clear dates</button></div>
+    </div>
+    ${(f.dateFrom||f.dateTo) ? `<div class="locked-note" style="margin:4px 0 12px;">Showing ${f.dateFrom?fmtDate(f.dateFrom):'the beginning'} through ${f.dateTo?fmtDate(f.dateTo):'today'}. Leave both blank for the full cumulative total across every day loaded.</div>` : `<div class="locked-note" style="margin:4px 0 12px;">Showing the full cumulative total across every day currently loaded. Set a From/To date above to narrow it.</div>`}
+
+    <div class="grid kpi-status">
+      <div class="kpi"><div class="num">${bucket('Signed Off')}</div><div class="lbl">Signed Off</div></div>
+      <div class="kpi"><div class="num">${bucket('Not Started')}</div><div class="lbl">Not Started</div></div>
+      <div class="kpi"><div class="num">${bucket('Open Items')}</div><div class="lbl">Open Items (Awaiting Review + Re-Review)</div></div>
+    </div>
+    <div class="grid kpis" style="grid-template-columns:repeat(3,1fr);">
+      <div class="kpi accent"><div class="num">${refund.count}</div><div class="lbl">Refund Transactions · Qty ${refund.qty} · ${money(refund.amt)}</div></div>
+      <div class="kpi accent"><div class="num">${over30.count}</div><div class="lbl">Return &gt;30 Days Transactions · Qty ${over30.qty} · ${money(over30.amt)}</div></div>
+      <div class="kpi accent"><div class="num">${fullprice.count}</div><div class="lbl">Full Price Sale Return Transactions · Qty (distinct) ${fullprice.count} · ${money(fullprice.amt)}</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Cluster Manager-wise Summary</h2></div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table class="compact-table"><thead>${CLUSTER_TABLE_HEAD}</thead><tbody>${clusterRows}</tbody></table>
+      </div>
+    </div>
+  `;
+}
+let hqFilters = {region:'all', dateFrom:'', dateTo:''};
+let clusterFilters = {dateFrom:'', dateTo:''};
+let regionalFilters = {dateFrom:'', dateTo:''};
+function getHqFilters(){ return hqFilters; }
+
+/* =========================================================
+   ADMIN VIEW
+   ========================================================= */
+function renderAdminView(){
+  return `
+    <div class="session-bar"><span>Signed in as <b>Admin</b></span><a id="adminLockBtn">Lock / sign out</a></div>
+    <div class="panel-head"><div><h1>Admin Control Panel</h1><p>Report ingestion, backend connection status and audit trail</p></div></div>
+    <div class="toolbar">
+      <button class="btn ${adminSubView==='upload'?'':'secondary'} sm" id="adminTabUpload">Report Ingestion</button>
+      <button class="btn ${adminSubView==='audit'?'':'secondary'} sm" id="adminTabAudit">Audit Trail</button>
+    </div>
+    ${adminSubView==='audit' ? renderAuditTrailBody() : renderAdminUploadBody()}
+  `;
+}
+
+function renderAdminUploadBody(){
+  const uploads = DATA.uploadLog.slice(0,15);
+  const uploadRows = uploads.length ? uploads.map(u=>`
+    <tr>
+      <td>${fmtDateTime(u.timestamp)}</td>
+      <td>${esc(u.fileName)}</td>
+      <td class="num-cell">${u.total}</td>
+      <td class="num-cell">${u.imported}</td>
+      <td class="num-cell">${u.duplicate}</td>
+      <td class="num-cell">${u.rejected}</td>
+      <td>${u.status}</td>
+    </tr>`).join('') : `<tr><td colspan="7" class="empty">No uploads yet.</td></tr>`;
+
+  return `
+    <div class="warn-box">This is a self-contained prototype. It has no live Google Apps Script backend — the connection status below is not a real network check. It runs on Claude's built-in persistent storage, which is real (data survives reloads and is shared across anyone with this link), but it is not Google Sheets. See the accompanying Apps Script package for a real Sheets-backed version.</div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="card">
+        <div class="card-head"><h2>Backend Connection</h2></div>
+        <div class="card-body">
+          <p><span class="status-dot dot-red"></span><b>Disconnected</b> — no Apps Script endpoint configured</p>
+          <p class="locked-note">Last successful sync: never · Last data refresh: never</p>
+          <button class="btn secondary sm" id="testConnBtn">Test Connection</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Storage Status</h2></div>
+        <div class="card-body">
+          <p><span class="status-dot dot-green"></span><b>Connected</b> — Claude persistent storage (shared)</p>
+          <p class="locked-note">Last report uploaded: ${DATA.lastUploadTs? fmtDateTime(DATA.lastUploadTs): 'never'}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Upload Return Report</h2></div>
+      <div class="card-body">
+        <p class="locked-note" style="margin-bottom:10px;">Accepts the standard Return Report export (.xlsx) — header on row 7, one row per line-item. Store list, Region and Cluster Manager are already built in from Attributes_Store; you don't need to upload that sheet. Only Refund, Returns Over 30 Days and Full Price Sale Return transactions are imported — clean, on-time, discounted exchanges are skipped and counted separately in the summary below.</p>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+        <button class="btn sm" id="uploadBtn" style="margin-left:8px;">Upload &amp; Process</button>
+        <div id="uploadSummaryBox"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Upload Log</h2></div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table><thead><tr><th>Timestamp</th><th>File</th><th>Total</th><th>Imported</th><th>Duplicate</th><th>Rejected</th><th>Status</th></tr></thead>
+        <tbody>${uploadRows}</tbody></table>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================
+   AUDIT TRAIL (folded into Admin — no longer a main nav tab)
+   ========================================================= */
+function renderAuditTrailBody(){
+  const rows = DATA.auditLog.slice(0,300).map(a=>`
+    <tr>
+      <td>${fmtDateTime(a.timestamp)}</td>
+      <td>${esc(a.user)}</td>
+      <td>${esc(a.role)}</td>
+      <td>${esc(a.action)}</td>
+      <td class="mono">${esc(a.transaction||'—')}</td>
+      <td>${esc(a.prevStatus||'—')} → ${esc(a.newStatus||'—')}</td>
+      <td>${esc(a.remarks||'')}</td>
+    </tr>`).join('') || `<tr><td colspan="7" class="empty">No audit entries yet.</td></tr>`;
+  return `
+    <div class="card">
+      <div class="card-head"><h2>Audit Trail</h2><span class="count">Immutable log of submissions, reviews, re-reviews, sign-offs and uploads</span></div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table><thead><tr><th>Timestamp</th><th>User</th><th>Role</th><th>Action</th><th>Transaction</th><th>Status Change</th><th>Remarks</th></tr></thead>
+        <tbody>${rows}</tbody></table>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================
+   EVENT HANDLERS
+   ========================================================= */
+function bindDynamicHandlers(){
+  // Store: approval checkbox — updates the submit button's enabled state
+  // live, WITHOUT a full re-render, so any remarks being typed in other
+  // rows are never wiped out by the checkbox click.
+  document.querySelectorAll('[data-approve]').forEach(el=>{
+    el.onchange = ()=>{
+      const t = DATA.transactions.find(x=>x.id===el.dataset.approve);
+      t.storeApproval = el.checked;
+      persistQuiet();
+      updateSubmitButtonState();
+    };
+  });
+  // Store: remarks (draft) / respond (re-review). Saved to the in-memory
+  // model on every keystroke (not just on blur) so remarks are never lost
+  // to a stray re-render or an auto-refresh landing mid-edit; written to
+  // persistent storage on blur to avoid excessive writes.
+  document.querySelectorAll('[data-remark], [data-respond]').forEach(el=>{
+    el.addEventListener('focus', ()=>editingActive=true);
+    el.addEventListener('input', ()=>{
+      const id = el.dataset.remark || el.dataset.respond;
+      const t = DATA.transactions.find(x=>x.id===id);
+      if(t) t.storeRemarks = el.value;
+    });
+    el.addEventListener('blur', ()=>{
+      editingActive=false;
+      const id = el.dataset.remark || el.dataset.respond;
+      const t = DATA.transactions.find(x=>x.id===id);
+      t.storeRemarks = el.value;
+      persistQuiet();
+    });
+  });
+  // Reason for Return dropdown + its "Other" free-text follow-up.
+  document.querySelectorAll('[data-reason]').forEach(el=>{
+    el.onchange = ()=>{
+      const t = DATA.transactions.find(x=>x.id===el.dataset.reason);
+      if(t) t.reason = el.value;
+      persistQuiet();
+      render(); // re-render so the "Other" textarea appears/disappears immediately
+    };
+  });
+  document.querySelectorAll('[data-reasonremarks]').forEach(el=>{
+    el.addEventListener('focus', ()=>editingActive=true);
+    el.addEventListener('input', ()=>{
+      const t = DATA.transactions.find(x=>x.id===el.dataset.reasonremarks);
+      if(t) t.reasonRemarks = el.value;
+    });
+    el.addEventListener('blur', ()=>{
+      editingActive=false;
+      const t = DATA.transactions.find(x=>x.id===el.dataset.reasonremarks);
+      if(t) t.reasonRemarks = el.value;
+      persistQuiet();
+    });
+  });
+  document.querySelectorAll('[data-clusterremark]').forEach(el=>{
+    el.addEventListener('focus', ()=>editingActive=true);
+    el.addEventListener('blur', ()=>{
+      editingActive=false;
+      const t = DATA.transactions.find(x=>x.id===el.dataset.clusterremark);
+      t.clusterRemarks = el.value;
+      persistQuiet();
+    });
+  });
+
+  // Submit all approved drafts
+  const submitAllBtn = document.getElementById('submitAllBtn');
+  if(submitAllBtn) submitAllBtn.onclick = ()=>{
+    if(submitAllBtn.disabled) return;
+    submitStoreDrafts(storeAuth.storeCode);
+  };
+
+  // Resubmit after re-review
+  document.querySelectorAll('[data-resubmit]').forEach(b=>{
+    b.onclick = ()=>resubmitTxn(b.dataset.resubmit);
+  });
+
+  // Cluster manager actions
+  document.querySelectorAll('[data-signoff]').forEach(b=>{
+    b.onclick = ()=>signOffTxn(b.dataset.signoff);
+  });
+  document.querySelectorAll('[data-rereview]').forEach(b=>{
+    b.onclick = ()=>sendReReview(b.dataset.rereview);
+  });
+
+  // HQ filters
+  ['fDateFrom','fDateTo','fRegion'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.onchange = ()=>{
+      hqFilters = {
+        dateFrom: document.getElementById('fDateFrom').value,
+        dateTo: document.getElementById('fDateTo').value,
+        region: document.getElementById('fRegion').value
+      };
+      render();
+    };
+  });
+  const fClearBtn = document.getElementById('fClearBtn');
+  if(fClearBtn) fClearBtn.onclick = ()=>{
+    hqFilters = { dateFrom:'', dateTo:'', region: hqFilters.region };
+    render();
+  };
+
+  // Cluster Review filters
+  ['cFDateFrom','cFDateTo'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.onchange = ()=>{
+      clusterFilters = {
+        dateFrom: document.getElementById('cFDateFrom').value,
+        dateTo: document.getElementById('cFDateTo').value
+      };
+      render();
+    };
+  });
+  const cFClearBtn = document.getElementById('cFClearBtn');
+  if(cFClearBtn) cFClearBtn.onclick = ()=>{ clusterFilters = {dateFrom:'', dateTo:''}; render(); };
+
+  // Regional Manager Insights filters
+  ['rFDateFrom','rFDateTo'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.onchange = ()=>{
+      regionalFilters = {
+        dateFrom: document.getElementById('rFDateFrom').value,
+        dateTo: document.getElementById('rFDateTo').value
+      };
+      render();
+    };
+  });
+  const rFClearBtn = document.getElementById('rFClearBtn');
+  if(rFClearBtn) rFClearBtn.onclick = ()=>{ regionalFilters = {dateFrom:'', dateTo:''}; render(); };
+
+  // Regional Manager Insights — region selector
+  const regionSel = document.getElementById('regionSelect');
+  if(regionSel) regionSel.onchange = (e)=>{ ctx.region = e.target.value; render(); };
+
+  // Store login gate
+  const loginStoreSelect = document.getElementById('loginStoreSelect');
+  if(loginStoreSelect) loginStoreSelect.onchange = (e)=>{ storeAuth.storeCode = e.target.value; render(); };
+  const storeUnlockBtn = document.getElementById('storeUnlockBtn');
+  if(storeUnlockBtn) storeUnlockBtn.onclick = async ()=>{
+    const sel = document.getElementById('loginStoreSelect');
+    const pass = document.getElementById('loginStorePass').value;
+    storeUnlockBtn.disabled = true; storeUnlockBtn.textContent = 'Checking...';
+    const ok = await verifyLogin('store', sel.value, pass);
+    storeUnlockBtn.disabled = false; storeUnlockBtn.textContent = 'Unlock';
+    if(ok){
+      storeAuth.storeCode = sel.value;
+      storeAuth.unlocked = true;
+      render();
+    } else {
+      showToast('Incorrect store password.');
+    }
+  };
+  const storeLockBtn = document.getElementById('storeLockBtn');
+  if(storeLockBtn) storeLockBtn.onclick = ()=>{ storeAuth.unlocked = false; render(); };
+  const adminStoreSwitch = document.getElementById('adminStoreSwitch');
+  if(adminStoreSwitch) adminStoreSwitch.onchange = ()=>{ storeAuth.storeCode = adminStoreSwitch.value; render(); };
+
+  // Cluster login gate
+  const loginClusterSelect = document.getElementById('loginClusterSelect');
+  if(loginClusterSelect) loginClusterSelect.onchange = (e)=>{ clusterAuth.clusterManager = e.target.value; render(); };
+  const clusterUnlockBtn = document.getElementById('clusterUnlockBtn');
+  if(clusterUnlockBtn) clusterUnlockBtn.onclick = async ()=>{
+    const sel = document.getElementById('loginClusterSelect');
+    const pass = document.getElementById('loginClusterPass').value;
+    clusterUnlockBtn.disabled = true; clusterUnlockBtn.textContent = 'Checking...';
+    const ok = await verifyLogin('cluster', sel.value, pass);
+    clusterUnlockBtn.disabled = false; clusterUnlockBtn.textContent = 'Unlock';
+    if(ok){
+      clusterAuth.clusterManager = sel.value;
+      clusterAuth.unlocked = true;
+      render();
+    } else {
+      showToast('Incorrect cluster manager passcode.');
+    }
+  };
+  const clusterLockBtn = document.getElementById('clusterLockBtn');
+  if(clusterLockBtn) clusterLockBtn.onclick = ()=>{ clusterAuth.unlocked = false; render(); };
+  const adminClusterSwitch = document.getElementById('adminClusterSwitch');
+  if(adminClusterSwitch) adminClusterSwitch.onchange = ()=>{ clusterAuth.clusterManager = adminClusterSwitch.value; render(); };
+
+  // Regional login gate
+  const loginRegionalSelect = document.getElementById('loginRegionalSelect');
+  if(loginRegionalSelect) loginRegionalSelect.onchange = (e)=>{ regionalAuth.region = e.target.value; render(); };
+  const regionalUnlockBtn = document.getElementById('regionalUnlockBtn');
+  if(regionalUnlockBtn) regionalUnlockBtn.onclick = async ()=>{
+    const sel = document.getElementById('loginRegionalSelect');
+    const pass = document.getElementById('loginRegionalPass').value;
+    regionalUnlockBtn.disabled = true; regionalUnlockBtn.textContent = 'Checking...';
+    const ok = await verifyLogin('regional', sel.value, pass);
+    regionalUnlockBtn.disabled = false; regionalUnlockBtn.textContent = 'Unlock';
+    if(ok){
+      regionalAuth.region = sel.value;
+      regionalAuth.unlocked = true;
+      ctx.region = sel.value;
+      render();
+    } else {
+      showToast('Incorrect regional manager passcode.');
+    }
+  };
+  const regionalLockBtn = document.getElementById('regionalLockBtn');
+  if(regionalLockBtn) regionalLockBtn.onclick = ()=>{ regionalAuth.unlocked = false; render(); };
+
+  // Admin entry (small link in header, not part of main tabs)
+  const adminEntryLink = document.getElementById('adminEntryLink');
+  if(adminEntryLink) adminEntryLink.onclick = ()=>{ screen='admin'; render(); };
+  const manualRefreshBtn = document.getElementById('manualRefreshBtn');
+  if(manualRefreshBtn) manualRefreshBtn.onclick = async ()=>{
+    manualRefreshBtn.disabled = true; manualRefreshBtn.textContent = 'Refreshing...';
+    const fresh = await fetchDataFromBackend();
+    manualRefreshBtn.disabled = false; manualRefreshBtn.textContent = '↻ Refresh';
+    if(fresh){
+      DATA = fresh;
+      lastLoadedTs = new Date().toISOString();
+      nextRefreshIn = REFRESH_INTERVAL_SECONDS; // manual refresh also resets the auto-refresh countdown
+      render();
+      showToast('Refreshed.');
+    } else {
+      showToast('Refresh failed — still showing the last successfully loaded data.', 6000);
+    }
+  };
+
+  const adminUnlockBtn = document.getElementById('adminUnlockBtn');
+  if(adminUnlockBtn) adminUnlockBtn.onclick = async ()=>{
+    const u = document.getElementById('loginAdminUser').value.trim();
+    const p = document.getElementById('loginAdminPass').value;
+    adminUnlockBtn.disabled = true; adminUnlockBtn.textContent = 'Checking...';
+    const ok = await verifyLogin('admin', u, p);
+    adminUnlockBtn.disabled = false; adminUnlockBtn.textContent = 'Unlock';
+    if(ok){
+      adminAuth.unlocked = true;
+      adminSubView = 'upload';
+      render();
+    }else{
+      showToast('Incorrect admin username or password.');
+    }
+  };
+  const adminLockBtn = document.getElementById('adminLockBtn');
+  if(adminLockBtn) adminLockBtn.onclick = ()=>{ adminAuth.unlocked=false; screen='hq'; render(); };
+
+  const adminTabUpload = document.getElementById('adminTabUpload');
+  if(adminTabUpload) adminTabUpload.onclick = ()=>{ adminSubView='upload'; render(); };
+  const adminTabAudit = document.getElementById('adminTabAudit');
+  if(adminTabAudit) adminTabAudit.onclick = ()=>{ adminSubView='audit'; render(); };
+
+  const testBtn = document.getElementById('testConnBtn');
+  if(testBtn) testBtn.onclick = ()=>showToast('No backend configured — this prototype runs entirely on local persistent storage, not a live Apps Script endpoint.', 4500);
+  const uploadBtn = document.getElementById('uploadBtn');
+  if(uploadBtn) uploadBtn.onclick = handleUpload;
+}
+
+function persistQuiet(){ saveData(DATA); }
+
+// Re-syncs the Submit button's disabled state / label directly in the DOM
+// (no render()) so it reacts instantly to checkbox changes without touching
+// any remarks textarea a manager may still be typing into.
+function updateSubmitButtonState(){
+  const container = document.getElementById('submitControls');
+  if(!container) return;
+  const store = storeByCode(storeAuth.storeCode);
+  const mine = txnsFor(t=>t.storeCode===store.code);
+  const approvedDraftCount = mine.filter(t=>t.status==='Not Submitted' && t.storeApproval).length;
+  container.innerHTML = renderSubmitControlsInner(approvedDraftCount);
+  const btn = document.getElementById('submitAllBtn');
+  if(btn) btn.onclick = ()=>{ if(!btn.disabled) submitStoreDrafts(storeAuth.storeCode); };
+}
+
+// Only transactions ticked "Is Approved by Manager" move forward — an
+// unapproved draft stays at the store for further action instead of being
+// silently pushed into Cluster Review.
+function submitStoreDrafts(storeCode){
+  const drafts = DATA.transactions.filter(t=>t.storeCode===storeCode && t.status==='Not Submitted' && t.storeApproval);
+  if(!drafts.length){ showToast('No approved draft transactions to submit.'); return; }
+  const missingReason = drafts.filter(t=>!t.reason || (t.reason==='Other' && !t.reasonRemarks.trim()));
+  if(missingReason.length){
+    showToast(`${missingReason.length} approved transaction(s) are missing a Reason for Return (or remarks for "Other") — select one before submitting.`, 6000);
+    return;
+  }
+  const today = new Date().toISOString();
+  drafts.forEach(t=>{
+    t.status='Awaiting Review';
+    t.submittedDate = t.date;
+    t.lastUpdated = today;
+    t.lastUpdatedBy = 'Store Manager';
+    addAudit({user:'Store Manager', role:'Store', action:'Store Submitted', transaction:t.transactionNumber, prevStatus:'Not Submitted', newStatus:'Awaiting Review', remarks:t.storeRemarks});
+  });
+  saveData(DATA);
+  showToast(`${drafts.length} approved transaction(s) submitted and locked for Cluster Review.`);
+  render();
+}
+
+function resubmitTxn(id){
+  const t = DATA.transactions.find(x=>x.id===id);
+  if(!t || t.status!=='Re-Review') return;
+  t.status='Awaiting Review';
+  t.lastUpdated=new Date().toISOString();
+  t.lastUpdatedBy='Store Manager';
+  addAudit({user:'Store Manager', role:'Store', action:'Store Resubmitted', transaction:t.transactionNumber, prevStatus:'Re-Review', newStatus:'Awaiting Review', remarks:t.storeRemarks});
+  saveData(DATA);
+  showToast('Transaction resubmitted and locked again.');
+  render();
+}
+
+function signOffTxn(id){
+  const t = DATA.transactions.find(x=>x.id===id);
+  if(!t) return;
+  const prev = t.status;
+  t.reviewHistory = t.reviewHistory || [];
+  t.reviewHistory.push({ round: t.reviewHistory.length+1, decision:'Signed Off', remarks:t.clusterRemarks, by:clusterAuth.clusterManager, date:new Date().toISOString() });
+  t.status='Signed Off';
+  t.reviewedDate = new Date().toISOString().slice(0,10);
+  t.lastUpdated = new Date().toISOString();
+  t.lastUpdatedBy = clusterAuth.clusterManager;
+  addAudit({user:clusterAuth.clusterManager, role:'Cluster Manager', action:'Cluster Manager Signed Off (round '+t.reviewHistory.length+')', transaction:t.transactionNumber, prevStatus:prev, newStatus:'Signed Off', remarks:t.clusterRemarks});
+  saveData(DATA);
+  showToast('Transaction signed off and closed.');
+  render();
+}
+
+function sendReReview(id){
+  const t = DATA.transactions.find(x=>x.id===id);
+  if(!t) return;
+  if(!t.clusterRemarks || !t.clusterRemarks.trim()){
+    showToast('Cluster Manager remarks are required before sending for re-review.', 4000);
+    return;
+  }
+  const prev = t.status;
+  t.reviewHistory = t.reviewHistory || [];
+  t.reviewHistory.push({ round: t.reviewHistory.length+1, decision:'Re-Review', remarks:t.clusterRemarks, by:clusterAuth.clusterManager, date:new Date().toISOString() });
+  t.status='Re-Review';
+  t.lastUpdated = new Date().toISOString();
+  t.lastUpdatedBy = clusterAuth.clusterManager;
+  addAudit({user:clusterAuth.clusterManager, role:'Cluster Manager', action:'Cluster Manager Sent for Re-Review (round '+t.reviewHistory.length+')', transaction:t.transactionNumber, prevStatus:prev, newStatus:'Re-Review', remarks:t.clusterRemarks});
+  saveData(DATA);
+  showToast('Sent back to store for re-review.');
+  render();
+}
+
+// Cluster Review / Cluster Manager Review 2 cell — round 1 is "Cluster Review",
+// round 2 (only present if round 1 was Re-Review and store resubmitted) is
+// "Cluster Manager Review 2".
+function reviewRoundCell(t, round){
+  const entry = (t.reviewHistory||[])[round-1];
+  if(!entry) return '<span class="locked-note">—</span>';
+  const cls = entry.decision==='Signed Off' ? 'st-signed' : 'st-rereview';
+  return `<span class="badge ${cls}">${esc(entry.decision)}</span>
+    <div class="remark-locked" style="margin-top:5px;">${esc(entry.remarks)||'—'}</div>
+    <div class="locked-note" style="margin-top:3px;">${esc(entry.by||'')} · ${entry.date?fmtDateTime(entry.date):''}</div>`;
+}
+
+/* =========================================================
+   UPLOAD / IMPORT — real Return Report format
+   ---------------------------------------------------------
+   This parses the row-level Return/Exchange/Refund export directly
+   (one row per line-item, heavy per-transaction duplication),
+   collapses rows to distinct transactions, and classifies each into
+   Over 30 Days / Refund / Full Price Sale Return using the same base
+   logic as the retail-returns-compliance skill's analyze_returns.py
+   (Credit Memo is no longer tracked as its own bucket — a transaction
+   settled via credit memo now falls under Full Price Sale Return if
+   any line was returned at full price, otherwise it is skipped as a
+   clean exchange, same as any other non-flagged return).
+
+   COLUMN LAYOUT: this matches the skill's documented column
+   contract (SKILL.md / analyze_returns.py COL_* constants) — no
+   "Time" column. An earlier version of this file carried a +1
+   offset from RETURN_RECEIPT onward to match a report export that
+   had a stray Time column after Return Date; that column has since
+   been removed from the source report, so the offset is removed
+   here too. If a future export reintroduces a Time (or any other)
+   column, EXPECTED_HEADERS below will catch it — the strict column
+   check aborts the import with a clear mismatch message rather than
+   silently misaligning data.
+
+   Only Refund, Over 30 Days and Full Price Sale Return transactions
+   are imported. A clean, on-time, discounted exchange is not a
+   compliance item and is intentionally skipped — the upload summary
+   reports how many were skipped this way so nothing silently
+   disappears.
+   ========================================================= */
+const SRC_HEADER_ROW_1BASED = 7; // documented header row; verified by content, not just position
+const EXPECTED_HEADERS = [
+  'Store Name','Store','Date','Receipt','Sales Order','Transaction','Sales Group','Sales Group Name',
+  'Receipt','Transaction','Sales Order','Date','Store','Store Name','Phone Number',
+  'Item','Barcode','Quantity','Unit Price','Total Amount',
+  'Item','Barcode','Price','Quantity','Total Amount',
+  'Transaction Type','Payment Method Name'
+];
+const COL = {
+  STORE_NAME:0, STORE_CODE:1, RETURN_DATE:2, RETURN_RECEIPT:3, SALES_ORDER:4, TRANSACTION:5,
+  SALES_GROUP:6, SALES_GROUP_NAME:7, ORIG_RECEIPT:8, ORIG_TRANSACTION:9, ORIG_SALES_ORDER:10, ORIG_DATE:11,
+  ORIG_STORE:12, ORIG_STORE_NAME:13, PHONE:14, SOLD_ITEM:15, SOLD_BARCODE:16, SOLD_QTY:17, SOLD_UNIT_PRICE:18,
+  SOLD_TOTAL:19, RETURN_ITEM:20, RETURN_BARCODE:21, RETURN_PRICE:22, RETURN_QTY:23, RETURN_TOTAL:24,
+  TXN_TYPE:25, PAYMENT_METHOD:26,
+  TRANSACTION_TIME:27, // column AB — new. Read positionally, not header-name
+                       // checked, since the exact label you give it in the
+                       // report isn't fixed yet; whatever's in AB is used.
+};
+
+function normText(v){ return String(v==null?'':v).trim().toLowerCase(); }
+function numOf(v){ const n = Number(v); return isNaN(n) ? 0 : n; }
+function toDateOnly(v){
+  if(v instanceof Date && !isNaN(v.getTime())) return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  if(typeof v === 'string' && v.trim()){
+    const d = new Date(v);
+    if(!isNaN(d.getTime())) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+  return null;
+}
+// Transaction Time (column AB) can arrive as a JS Date (Excel serial with
+// cellDates:true), a raw Excel time fraction (0–1 = fraction of a day), or
+// plain text like "14:35". All three are normalized to "HH:MM".
+function toTimeString(v){
+  if(v instanceof Date && !isNaN(v.getTime())){
+    return String(v.getHours()).padStart(2,'0')+':'+String(v.getMinutes()).padStart(2,'0');
+  }
+  if(typeof v === 'number' && v>=0 && v<1){
+    const totalMin = Math.round(v*24*60);
+    return String(Math.floor(totalMin/60)).padStart(2,'0')+':'+String(totalMin%60).padStart(2,'0');
+  }
+  if(typeof v === 'string' && v.trim()) return v.trim();
+  return '';
+}
+function isoDate(d){ return d ? d.toISOString().slice(0,10) : null; }
+
+// Find the header row by content (search near the documented row first,
+// then scan) rather than trusting the row number alone.
+function findHeaderRowIndex(aoa){
+  const candidates = [SRC_HEADER_ROW_1BASED-1, ...Array.from({length:15},(_,i)=>i)];
+  for(const idx of candidates){
+    const row = aoa[idx];
+    if(!row) continue;
+    const norm = row.map(normText);
+    if(norm.includes('transaction type') && norm.includes('payment method name')) return idx;
+  }
+  return -1;
+}
+
+function handleUpload(){
+  const input = document.getElementById('fileInput');
+  const file = input.files[0];
+  if(!file){ showToast('Choose a file first.'); return; }
   const reader = new FileReader();
-  reader.onload = function(ev){
-    const rows = parseCSV(ev.target.result);
-    if(!rows.length) return;
-    const header = rows[0].map(h=>h.trim());
-    const tnIdx = header.indexOf('Transfer No');
-    const remIdx = header.indexOf('Remarks');
-    if(tnIdx===-1 || remIdx===-1){
-      alert('This CSV does not have "Transfer No" and "Remarks" columns — import expects a file exported from this dashboard.');
+  reader.onload = (e)=>{
+    try{
+      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      const sheetName = wb.SheetNames.find(n=>!/attribut/i.test(n)) || wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
+      const aoa = XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', raw:true});
+      if(!aoa.length){ showToast('File has no rows.'); return; }
+
+      const headerIdx = findHeaderRowIndex(aoa);
+      if(headerIdx===-1){
+        showToast(`Could not find the report header row (expected "Transaction Type" and "Payment Method Name" columns). Import aborted — this file doesn't look like a Return Report export.`, 6000);
+        return;
+      }
+      const actualHeaders = aoa[headerIdx].map(h=>String(h||'').trim());
+      const mismatches = EXPECTED_HEADERS.map((exp,i)=>({i, exp, got:actualHeaders[i]||''}))
+        .filter(m=>normText(m.exp)!==normText(m.got));
+      if(mismatches.length){
+        const detail = mismatches.slice(0,6).map(m=>`col ${m.i+1}: expected "${m.exp}", found "${m.got||'(blank)'}"`).join(' · ');
+        showToast(`Report column layout doesn't match what this dashboard expects — import aborted rather than risk wrong numbers. ${detail}`, 9000);
+        document.getElementById('uploadSummaryBox').innerHTML = `<div class="warn-box" style="margin-top:12px;"><b>Column mismatch — nothing imported.</b><br>${detail}${mismatches.length>6?` · +${mismatches.length-6} more`:''}<br>Check the file layout against the Recognized Format note above before re-uploading.</div>`;
+        return;
+      }
+
+      const dataRows = aoa.slice(headerIdx+1).filter(r=>r.some(c=>String(c||'').trim()!==''));
+      if(!dataRows.length){ showToast('Header row found but no data rows beneath it.'); return; }
+
+      // Group raw rows into distinct transactions.
+      const PRICE_MATCH_TOLERANCE = 0.5; // rupees — absorbs rounding, not real discounts
+      const groups = new Map();
+      let skippedNoKey = 0;
+      dataRows.forEach(row=>{
+        const key = String(row[COL.TRANSACTION]||'').trim();
+        if(!key){ skippedNoKey++; return; }
+        if(!groups.has(key)){
+          groups.set(key, {
+            key,
+            storeCode: String(row[COL.STORE_CODE]||'').trim(),
+            returnDate: toDateOnly(row[COL.RETURN_DATE]),
+            txnTime: toTimeString(row[COL.TRANSACTION_TIME]),
+            origTransaction: '', origDate: null, paymentMethod: '', txnType: '',
+            returnQty: 0, returnTotal: 0, soldTotal: 0, itemCount: 0,
+            fullPriceItemCount: 0, discountedItemCount: 0, discountValue: 0,
+            fullPriceValue: 0, barcodes: [],
+          });
+        }
+        const g = groups.get(key);
+        g.returnQty += numOf(row[COL.RETURN_QTY]);
+        g.returnTotal += numOf(row[COL.RETURN_TOTAL]);
+        g.soldTotal += numOf(row[COL.SOLD_TOTAL]);
+        if(String(row[COL.RETURN_BARCODE]||'').trim()){
+          g.itemCount++;
+          // Full-price check for this line item: Return Price (listed unit
+          // price on the return line) x Return Qty is the value the item
+          // would carry at full price. Compare against the line's actual
+          // Return Total Amount — if they match, the item was returned at
+          // full price; if not, the sale (and so the return) was on discount.
+          const rowQty = numOf(row[COL.RETURN_QTY]);
+          const rowPrice = numOf(row[COL.RETURN_PRICE]);
+          const rowActual = numOf(row[COL.RETURN_TOTAL]);
+          const rowFullPriceValue = rowPrice * rowQty;
+          const isFullPriceLine = Math.abs(rowFullPriceValue - rowActual) <= PRICE_MATCH_TOLERANCE;
+          if(isFullPriceLine){
+            g.fullPriceItemCount++;
+            g.fullPriceValue += rowActual;
+          } else {
+            g.discountedItemCount++;
+            g.discountValue += (rowFullPriceValue - rowActual);
+          }
+          const rowBarcode = String(row[COL.RETURN_BARCODE]).trim();
+          const existingBarcode = g.barcodes.find(b=>b.barcode===rowBarcode);
+          if(existingBarcode){ existingBarcode.qty += rowQty; existingBarcode.amount += rowActual; }
+          else { g.barcodes.push({ barcode: rowBarcode, qty: rowQty, amount: rowActual, fullPrice: isFullPriceLine }); }
+        }
+        if(!g.origTransaction && row[COL.ORIG_TRANSACTION]) g.origTransaction = String(row[COL.ORIG_TRANSACTION]).trim();
+        if(!g.origDate && row[COL.ORIG_DATE]){ const d=toDateOnly(row[COL.ORIG_DATE]); if(d) g.origDate=d; }
+        if(!g.paymentMethod && row[COL.PAYMENT_METHOD]) g.paymentMethod = String(row[COL.PAYMENT_METHOD]).trim();
+        if(!g.txnType && row[COL.TXN_TYPE]) g.txnType = String(row[COL.TXN_TYPE]).trim();
+      });
+
+      let imported=0, duplicate=0, unknownStore=0, notFlagged=0, missingReturnDate=0;
+      const existingKeys = new Set(DATA.transactions.map(t=>t.transactionNumber));
+      let nextId = DATA.transactions.length + 1;
+
+      groups.forEach(g=>{
+        if(existingKeys.has(g.key)){ duplicate++; return; }
+        const store = resolveStore(g.storeCode);
+        if(!store){ unknownStore++; return; }
+
+        const isOnlineCN = /^cn/i.test(g.origTransaction||'');
+        let agingDays = null, isOver30 = false;
+        if(g.origDate && !isOnlineCN && g.returnDate){
+          agingDays = Math.round((g.returnDate - g.origDate) / 86400000);
+          isOver30 = agingDays > 30;
+        }
+        // Credit Memo is no longer its own compliance bucket, but the
+        // settlement-method check is kept as a guard so a transaction settled
+        // via Credit Memo is never mis-typed as a cash/bank Refund purely
+        // because of a remaining-balance mismatch.
+        const isCreditMemo = normText(g.paymentMethod) === 'credit memo';
+        const remainingBalance = g.returnTotal - Math.abs(g.soldTotal);
+        const isRefund = !isCreditMemo && (normText(g.txnType)==='refund' || remainingBalance>0);
+        // Credit Memo settlements are explicitly excluded from the Full Price
+        // Sale Return table — a credit-note issuance is not the same
+        // compliance event as a full-price cash/exchange return, and mixing
+        // them was flagged as a reporting error.
+        const isFullPriceReturn = g.fullPriceItemCount > 0 && !isCreditMemo;
+
+        let category = null;
+        if(isOver30) category = 'over30';
+        else if(isRefund) category = 'refund';
+        else if(isFullPriceReturn) category = 'fullprice';
+        if(!category){ notFlagged++; return; }
+
+        existingKeys.add(g.key);
+        // Compliance "amount" is metric-specific, matching the skill's Store
+        // Summary: Over 30 Days reports raw Return Value (the full amount at
+        // risk from a late return). Refund reports Remaining Balance (Return
+        // Value - Sold Value) — the money actually leaked to the customer.
+        // Full Price Sale Return reports the value of the full-price line(s)
+        // actually returned — the "Transactions Value" for that KPI.
+        const complianceAmount = category === 'over30' ? g.returnTotal
+          : category === 'refund' ? remainingBalance
+          : g.fullPriceValue;
+        let priceType = 'N/A';
+        if(g.fullPriceItemCount>0 && g.discountedItemCount===0) priceType = 'Full Price';
+        else if(g.discountedItemCount>0 && g.fullPriceItemCount===0) priceType = 'Discounted';
+        else if(g.fullPriceItemCount>0 && g.discountedItemCount>0) priceType = 'Mixed';
+        // The report's own Return Date column decides which day a transaction
+        // is filed under everywhere in this dashboard — NOT the date it was
+        // uploaded/imported. If that column can't be parsed for a given
+        // transaction, it is rejected rather than silently defaulted to
+        // today's date, since a silent default would misfile it under the
+        // wrong day in every date-range filter.
+        if(!g.returnDate){ missingReturnDate++; return; }
+        DATA.transactions.push(baseTxn({
+          id: 'T'+String(nextId++).padStart(5,'0'),
+          category,
+          storeCode: store.code,
+          transactionNumber: g.key,
+          itemCount: g.itemCount,
+          qty: g.returnQty,
+          amount: complianceAmount,
+          paymentMethod: g.paymentMethod,
+          date: isoDate(g.returnDate),
+          time: g.txnTime || '',
+          agingDays,
+          priceType,
+          discountValue: g.discountValue,
+          barcodes: g.barcodes,
+          origTransaction: g.origTransaction,
+          status: 'Not Submitted',
+        }));
+        imported++;
+      });
+
+      const logEntry = {
+        timestamp:new Date().toISOString(), fileName:file.name,
+        total: groups.size, imported, duplicate,
+        rejected: unknownStore + notFlagged + missingReturnDate,
+        status: imported>0?'Processed':'No records imported'
+      };
+      DATA.uploadLog.unshift(logEntry);
+      DATA.lastUploadTs = logEntry.timestamp;
+      addAudit({user:'Admin', role:'Admin', action:`Admin Uploaded Return Report (${file.name})`, transaction:'—', prevStatus:'—', newStatus:'—', remarks:`${imported} imported, ${duplicate} duplicate, ${unknownStore} unknown store, ${notFlagged} not flagged (clean exchange), ${missingReturnDate} unparseable return date, ${skippedNoKey} rows with no Transaction key`});
+      saveData(DATA);
+
+      document.getElementById('uploadSummaryBox').innerHTML = `
+        <div class="note-box" style="margin-top:12px;">
+          <b>Upload Summary</b> — Distinct transactions: ${groups.size} · Imported: ${imported} · Duplicate (already in system): ${duplicate} · Unknown store code: ${unknownStore} · Not flagged / clean exchange (skipped, not a compliance item): ${notFlagged}${missingReturnDate?` · <b>Unparseable Return Date (skipped — fix and re-upload): ${missingReturnDate}</b>`:''}${skippedNoKey?` · Rows with no Transaction key: ${skippedNoKey}`:''}
+        </div>`;
+      showToast(`Import complete: ${imported} new transaction(s) added.`);
+      render();
+    }catch(err){
+      showToast('Could not read file: '+(err.message||err), 5000);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function resolveStore(raw){
+  const s = String(raw||'').trim().toLowerCase();
+  if(!s) return null;
+  return STORES.find(st=>st.code.toLowerCase()===s || st.name.toLowerCase()===s) || null;
+}
+
+/* =========================================================
+   AUTO REFRESH (safe: skips while a field is being edited)
+   ========================================================= */
+setInterval(async ()=>{
+  nextRefreshIn--;
+  if(nextRefreshIn<=0){
+    nextRefreshIn=REFRESH_INTERVAL_SECONDS;
+    if(!editingActive){
+      // A failed refresh keeps showing the last successfully loaded DATA
+      // instead of wiping the screen — a transient network blip must never
+      // look like the data was deleted.
+      const fresh = await fetchDataFromBackend();
+      if(fresh){
+        DATA = fresh;
+        lastLoadedTs = new Date().toISOString();
+        render();
+      } else {
+        showToast('Auto-refresh failed — still showing the last successfully loaded data.', 6000);
+      }
       return;
     }
-    let merged = 0;
-    for(let i=1;i<rows.length;i++){
-      const r = rows[i];
-      const tn = (r[tnIdx]||'').trim();
-      const rem = (r[remIdx]||'').trim();
-      if(tn && rem){ remarksMap[tn] = rem; merged++; }
-    }
-    saveRemarks();
-    applyFilters();
-    alert('Merged remarks for ' + merged + ' transfer order(s).');
-  };
-  reader.readAsText(f);
-  e.target.value = '';
-});
-
-function pktToday(){
-  const now = new Date();
-  const utcMs = now.getTime() + now.getTimezoneOffset()*60000;
-  const pkt = new Date(utcMs + 5*3600000);
-  return new Date(pkt.getFullYear(), pkt.getMonth(), pkt.getDate());
-}
-function stripTimeBuffered(d){
-  // For DATE-ONLY Excel cells (e.g. Ship Date, always stored at midnight):
-  // SheetJS's serial-to-Date conversion can drift by a few seconds either side
-  // of true midnight (floating-point precision), enough to land on the wrong
-  // calendar day when read directly. Buffer by 12h before truncating so that
-  // drift never flips the date. Do NOT use this on columns with a real
-  // time-of-day component — see stripTimeExact.
-  const buffered = new Date(d.getTime() + 12*3600000);
-  return new Date(buffered.getFullYear(), buffered.getMonth(), buffered.getDate());
-}
-function stripTimeExact(d){
-  // For columns with a genuine time-of-day (e.g. Created date and time, which
-  // carries real timestamps like 15:56:57 — not just midnight): truncate
-  // directly with no buffer. Adding a 12h buffer here would push any
-  // afternoon/evening timestamp into the next calendar day.
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-function daysBetween(a,b){ return Math.round((a-b)/86400000); }
-function shiftWeekendToMonday(d){
-  const day = d.getDay();
-  if(day===6) return new Date(d.getFullYear(), d.getMonth(), d.getDate()+2);
-  if(day===0) return new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
-  return d;
-}
-function ageSlab(age){
-  if(age==null) return 'No Date';
-  if(age<=2) return '0-2 Days';
-  if(age<=5) return '3-5 Days';
-  if(age<=10) return '6-10 Days';
-  return '10+ Days';
-}
-function excelDate(v){
-  if(v==null || v==='') return null;
-  if(v instanceof Date) return v;
-  if(typeof v==='number') return new Date(Math.round((v-25569)*86400000));
-  const d = new Date(v);
-  return isNaN(d) ? null : d;
-}
-function fmtDate(d){
-  if(!d) return '—';
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-
-document.getElementById('fileInput').addEventListener('change', function(e){
-  const f = e.target.files[0];
-  if(!f) return;
-  const reader = new FileReader();
-  reader.onload = function(ev){
-    try{
-      const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
-      processWorkbook(wb, f.name);
-    }catch(err){
-      showError('Could not read this file — ' + err.message);
-    }
-  };
-  reader.readAsArrayBuffer(f);
-});
-
-function showError(msg){
-  const box = document.getElementById('errBox');
-  box.textContent = msg;
-  box.classList.add('show');
-  document.getElementById('dashboard').style.display = 'none';
-}
-function clearError(){ document.getElementById('errBox').classList.remove('show'); }
-
-function processWorkbook(wb, fname){
-  clearError();
-  if(!wb.SheetNames.includes('Transfer Data Sheet') || !wb.SheetNames.includes('Node Master')){
-    const missing = [];
-    if(!wb.SheetNames.includes('Transfer Data Sheet')) missing.push('Transfer Data Sheet');
-    if(!wb.SheetNames.includes('Node Master')) missing.push('Node Master');
-    showError('Workbook is missing required sheet(s): ' + missing.join(', '));
-    return;
   }
-  const dataRows = XLSX.utils.sheet_to_json(wb.Sheets['Transfer Data Sheet'], {defval:null});
-  const nodeRows = XLSX.utils.sheet_to_json(wb.Sheets['Node Master'], {defval:null});
+  renderClock();
+}, 1000);
 
-  const dataReq = ['Transfer number','Transfer status','From warehouse','To warehouse','Ship Date','Receipt Date','TO Qty','Ship Qty','Recvd. Qty','Created date and time'];
-  const nodeReq = ['Code','Node Name','Region','Node Type','Cluster Manager Name','Region Division'];
-  const dataHeaders = dataRows.length ? Object.keys(dataRows[0]) : [];
-  const nodeHeaders = nodeRows.length ? Object.keys(nodeRows[0]) : [];
-  const missD = dataReq.filter(h=>!dataHeaders.includes(h));
-  const missN = nodeReq.filter(h=>!nodeHeaders.includes(h));
-  if(missD.length || missN.length){
-    let msg = '';
-    if(missD.length) msg += 'Transfer Data Sheet missing: ' + missD.join(', ') + '. ';
-    if(missN.length) msg += 'Node Master missing: ' + missN.join(', ') + '.';
-    showError(msg);
-    return;
-  }
-
-  const nodeMap = {};
-  nodeRows.forEach(r=>{
-    nodeMap[String(r['Code']).trim()] = {
-      name: r['Node Name'], region: r['Region'] || 'Unassigned',
-      type: r['Node Type'] || 'Other',
-      cm: (r['Cluster Manager Name'] && r['Cluster Manager Name'] !== '-') ? r['Cluster Manager Name'] : 'Unassigned',
-      div: r['Region Division'] || 'Unassigned'
-    };
-  });
-
-  const today = pktToday();
-  const pd = [], pr = [];
-
-  dataRows.forEach(row=>{
-    const fromCode = row['From warehouse'] != null ? String(row['From warehouse']).trim() : '';
-    const toCode = row['To warehouse'] != null ? String(row['To warehouse']).trim() : '';
-    const fromNode = nodeMap[fromCode];
-    const toNode = nodeMap[toCode];
-    const status = (row['Transfer status']||'').toString().trim();
-    const toQty = Number(row['TO Qty'])||0;
-    const shipQty = Number(row['Ship Qty'])||0;
-    const recvQty = Number(row['Recvd. Qty'])||0;
-
-    const routeOf = (fn, tn) => {
-      const fLabel = fn && fn.type === 'Stores' ? 'Store' : (fn ? fn.type : 'Unknown');
-      const tLabel = tn && tn.type === 'Stores' ? 'Store' : (tn ? tn.type : 'Unknown');
-      return fLabel + ' to ' + tLabel;
-    };
-
-    if(fromNode && fromNode.type === 'Stores' && status === 'Created' && !row['Ship Date']){
-      let createdRaw = excelDate(row['Created date and time']);
-      let age = null, slab = 'No Date', drivingDate = null;
-      if(createdRaw){
-        let d = stripTimeExact(createdRaw);
-        d = shiftWeekendToMonday(d);
-        drivingDate = d;
-        age = Math.max(0, daysBetween(today, d));
-        slab = ageSlab(age);
-      }
-      pd.push({
-        transfer: row['Transfer number'], store: fromCode, storeName: fromNode.name,
-        region: fromNode.region, cm: fromNode.cm, div: fromNode.div,
-        route: routeOf(fromNode, toNode), qty: toQty - shipQty,
-        drivingDate, age, slab, flow:'Pending Dispatch'
-      });
-    }
-    if(toNode && toNode.type === 'Stores' && status === 'Shipped' && !row['Receipt Date']){
-      let shipRaw = excelDate(row['Ship Date']);
-      let age = null, slab = 'No Date', drivingDate = null;
-      if(shipRaw){
-        const d = stripTimeBuffered(shipRaw);
-        drivingDate = d;
-        age = daysBetween(today, d);
-        slab = ageSlab(age);
-      }
-      pr.push({
-        transfer: row['Transfer number'], store: toCode, storeName: toNode.name,
-        region: toNode.region, cm: toNode.cm, div: toNode.div,
-        route: routeOf(fromNode, toNode), qty: shipQty - recvQty,
-        drivingDate, age, slab, flow:'Pending Receiving'
-      });
-    }
-  });
-
-  RAW.pd = pd; RAW.pr = pr;
-  activateDashboard(fname, dataRows.length, today);
-}
-
-function activateDashboard(fname, scannedCount, today){
-  document.getElementById('metaBlock').innerHTML =
-    '<div>Source: ' + fname + '</div><div>Generated: ' + today.toDateString() + ' (PKT)</div>'+
-    '<div class="badge" id="recordCountTop">' + scannedCount.toLocaleString() + ' TO lines scanned &middot; ' + (RAW.pd.length+RAW.pr.length) + ' pending</div>';
-  document.getElementById('loadedFileName').textContent = fname + ' — ' + (RAW.pd.length+RAW.pr.length) + ' pending lines';
-  document.getElementById('uploadBox').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-  const pubBtn = document.getElementById('publishBtn');
-  if(pubBtn) pubBtn.style.display = API_URL ? 'inline-block' : 'none';
-
-  buildSlicers();
-  applyFilters();
-}
-
-function buildWorkbookFromSheets(sheets){
-  const wb = XLSX.utils.book_new();
-  sheets.forEach(sd=>{
-    const aoa = [sd.headers, ...sd.rows];
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!autofilter'] = { ref: XLSX.utils.encode_range({s:{r:0,c:0}, e:{r:sd.rows.length, c:sd.headers.length-1}}) };
-    ws['!cols'] = sd.headers.map(()=>({wch:16}));
-    XLSX.utils.book_append_sheet(wb, ws, sd.name);
-  });
-  return wb;
-}
-
-function exportDashboardExcel(){
-  if(!RAW.pd.length && !RAW.pr.length){ alert('Upload a workbook first — nothing loaded to export yet.'); return; }
-  const headers = ['Transfer No','Store Code','Store Name','Region','Sub Region','Route','Cluster Manager','Pending Qty','Driving Date','Age (Days)','Age Slab','Remarks'];
-  const toRow = r => [
-    r.transfer||'', r.store, r.storeName||'', r.region, r.div, r.route, r.cm,
-    r.qty||0, r.drivingDate?fmtDate(r.drivingDate):'', r.age==null?'':r.age, r.slab, remarksMap[r.transfer||'']||''
-  ];
-  const wb = buildWorkbookFromSheets([
-    { name:'Pending Dispatch', headers, rows:(window._export_pd||[]).map(toRow) },
-    { name:'Pending Receiving', headers, rows:(window._export_pr||[]).map(toRow) }
-  ]);
-  XLSX.writeFile(wb, 'TO_Dashboard_' + new Date().toISOString().slice(0,10) + '.xlsx');
-}
-
-function exportClusterManagerExcel(){
-  if(!RAW.pd.length && !RAW.pr.length){ alert('Upload a workbook first — nothing loaded to export yet.'); return; }
-  const headers = ['Cluster Manager','Store Code','Store Name','Region','TO Count','Pending Qty'];
-  const toRow = l => [l.cm, l.store, l.name||'', l.region, l.count, l.qty];
-  const wb = buildWorkbookFromSheets([
-    { name:'Pending Dispatch', headers, rows:(window._summary_pd||[]).map(toRow) },
-    { name:'Pending Receiving', headers, rows:(window._summary_pr||[]).map(toRow) }
-  ]);
-  XLSX.writeFile(wb, 'TO_Cluster_Manager_Summary_' + new Date().toISOString().slice(0,10) + '.xlsx');
-}
-
-function generateSnapshot(){
-  if(!RAW.pd.length && !RAW.pr.length){ alert('Upload a workbook first — nothing loaded to snapshot yet.'); return; }
-  // Serialize drivingDate as a plain Y-M-D string (not ISO/UTC) so the snapshot
-  // shows the same calendar date no matter what timezone it's later opened in.
-  const toPlain = r => ({...r, drivingDate: r.drivingDate ? fmtDate(r.drivingDate) : null});
-  const payload = {
-    fname: document.getElementById('loadedFileName').textContent || 'Uploaded workbook',
-    generatedAt: new Date().toISOString(),
-    pd: RAW.pd.map(toPlain),
-    pr: RAW.pr.map(toPlain),
-    remarks: remarksMap
-  };
-  const clone = document.documentElement.cloneNode(true);
-  const embEl = clone.querySelector('#embeddedData');
-  embEl.textContent = JSON.stringify(payload);
-  const html = '<!DOCTYPE html>\n' + clone.outerHTML;
-  const blob = new Blob([html], {type:'text/html;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  const stamp = new Date().toISOString().slice(0,10);
-  a.download = 'TO_Aging_Dashboard_Snapshot_' + stamp + '.html';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function loadFromEmbedded(payload){
-  // drivingDate arrives as a plain 'YYYY-MM-DD' string — parse its components
-  // directly rather than via `new Date(string)`, which would reinterpret a
-  // date-only string as UTC midnight and can shift the day depending on the
-  // viewer's local timezone.
-  const reviveDate = s => {
-    if(!s) return null;
-    const [y,m,d] = s.split('-').map(Number);
-    return new Date(y, m-1, d);
-  };
-  RAW.pd = (payload.pd||[]).map(r=>({...r, drivingDate: reviveDate(r.drivingDate)}));
-  RAW.pr = (payload.pr||[]).map(r=>({...r, drivingDate: reviveDate(r.drivingDate)}));
-  if(payload.remarks){ Object.assign(remarksMap, payload.remarks); saveRemarks(); }
-  const genDate = payload.generatedAt ? new Date(payload.generatedAt) : new Date();
-  activateDashboard((payload.fname||'Shared snapshot') + ' (snapshot)', 0, genDate);
-  const badge = document.getElementById('recordCountTop');
-  if(badge) badge.textContent = (RAW.pd.length+RAW.pr.length) + ' pending lines — static snapshot, generated ' + genDate.toDateString();
-}
-
-(function initFromEmbedded(){
-  if(!LOCKED_ACCESS_CODE && !LOCKED_CLUSTER_CODE && !IS_ADMIN) hideAdminControls();
-
-  const urlInput = document.getElementById('apiUrlInput');
-  if(urlInput && API_URL) urlInput.value = API_URL;
-
-  if(LOCKED_ACCESS_CODE){
-    // A store link only ever makes sense against live data — there's no
-    // local upload path in store mode, so don't fall through to a snapshot.
-    fetchStoreData(LOCKED_ACCESS_CODE);
-    return;
-  }
-  if(LOCKED_CLUSTER_CODE){
-    fetchClusterData(LOCKED_CLUSTER_CODE);
-    return;
-  }
-
-  const el = document.getElementById('embeddedData');
-  const raw = el ? el.textContent.trim() : '';
-  if(raw && raw !== 'null'){
-    try{ loadFromEmbedded(JSON.parse(raw)); return; }
-    catch(e){ console.error('Failed to load embedded snapshot data', e); }
-  }
-  // No baked-in snapshot data — fall back to live data if a source is configured.
-  if(API_URL) fetchLiveData(false);
+/* =========================================================
+   INIT
+   ========================================================= */
+(async function init(){
+  DATA = await loadData();
+  lastLoadedTs = new Date().toISOString();
+  render();
 })();
-
-function buildSlicers(){
-  const all = RAW.pd.concat(RAW.pr);
-  const regions = [...new Set(all.map(r=>r.region))].sort();
-  const cms = [...new Set(all.map(r=>r.cm))].sort();
-
-  document.getElementById('regionChips').innerHTML = regions.map(r=>
-    '<div class="chip" data-region="'+r+'">'+r+'</div>').join('');
-  document.querySelectorAll('#regionChips .chip').forEach(c=>c.onclick=()=>{
-    const r = c.dataset.region;
-    if(FILTERS.regions.has(r)) FILTERS.regions.delete(r); else FILTERS.regions.add(r);
-    applyFilters();
-  });
-
-  document.getElementById('cmChips').innerHTML = cms.map(c=>
-    '<div class="chip" data-cm="'+c+'">'+c+'</div>').join('');
-  document.querySelectorAll('#cmChips .chip').forEach(c=>c.onclick=()=>{
-    const m = c.dataset.cm;
-    if(FILTERS.cms.has(m)) FILTERS.cms.delete(m); else FILTERS.cms.add(m);
-    applyFilters();
-  });
-
-  document.getElementById('slabChips').innerHTML = ['0-2 Days','3-5 Days','6-10 Days','10+ Days'].map(s=>
-    '<div class="chip" data-slab="'+s+'">'+s+'</div>').join('');
-  document.querySelectorAll('#slabChips .chip').forEach(c=>c.onclick=()=>{
-    const s = c.dataset.slab;
-    if(FILTERS.slabs.has(s)) FILTERS.slabs.delete(s); else FILTERS.slabs.add(s);
-    applyFilters();
-  });
-
-  document.querySelectorAll('#pdTable thead th').forEach(th=>th.onclick=()=>{
-    const k = th.dataset.k;
-    if(SORT_PD.key===k) SORT_PD.dir = SORT_PD.dir==='asc' ? 'desc' : 'asc'; else { SORT_PD.key=k; SORT_PD.dir='desc'; }
-    applyFilters();
-  });
-  document.querySelectorAll('#prTable thead th').forEach(th=>th.onclick=()=>{
-    const k = th.dataset.k;
-    if(SORT_PR.key===k) SORT_PR.dir = SORT_PR.dir==='asc' ? 'desc' : 'asc'; else { SORT_PR.key=k; SORT_PR.dir='desc'; }
-    applyFilters();
-  });
-}
-
-function resetFilters(){
-  FILTERS = { regions:new Set(), cms:new Set(), slabs:new Set() };
-  buildSlicers();
-  applyFilters();
-}
-
-function showTab(tab){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
-  document.getElementById('tabDash').classList.toggle('active', tab==='dash');
-  document.getElementById('tabSummary').classList.toggle('active', tab==='summary');
-}
-
-function passesFilters(r){
-  // Store mode's data is already filtered server-side by fetchStoreData — no
-  // client-side store check needed here (LOCKED_ACCESS_CODE is an opaque
-  // credential, not something comparable to r.store).
-  if(FILTERS.regions.size && !FILTERS.regions.has(r.region)) return false;
-  if(FILTERS.cms.size && !FILTERS.cms.has(r.cm)) return false;
-  if(FILTERS.slabs.size && !FILTERS.slabs.has(r.slab)) return false;
-  return true;
-}
-
-function applyFilters(){
-  document.querySelectorAll('#regionChips .chip').forEach(c=>c.classList.toggle('active', FILTERS.regions.has(c.dataset.region)));
-  document.querySelectorAll('#cmChips .chip').forEach(c=>c.classList.toggle('active', FILTERS.cms.has(c.dataset.cm)));
-  document.querySelectorAll('#slabChips .chip').forEach(c=>c.classList.toggle('active', FILTERS.slabs.has(c.dataset.slab)));
-
-  const pd = RAW.pd.filter(passesFilters);
-  const pr = RAW.pr.filter(passesFilters);
-  const all = pd.concat(pr);
-
-  document.getElementById('filteredCount').textContent = all.length.toLocaleString() + ' of ' + (RAW.pd.length+RAW.pr.length).toLocaleString() + ' pending lines';
-
-  renderKPIs(pd, pr);
-  renderRegionChart(pd, pr);
-  renderSlabChart(pd, pr);
-  renderCmCharts(pd, pr);
-  renderTop10Charts(pd, pr);
-  renderRouteTables(pd, pr);
-  // Line-level detail and the cluster manager summary intentionally exclude
-  // fresh 0-2 day TOs — those aren't actionable yet, so they'd just be noise
-  // in a list meant for follow-up.
-  renderTable('pd', pd.filter(r=>r.slab!=='0-2 Days'));
-  renderTable('pr', pr.filter(r=>r.slab!=='0-2 Days'));
-  renderSummaryTables(RAW.pd.filter(r=>r.slab!=='0-2 Days'), RAW.pr.filter(r=>r.slab!=='0-2 Days'));
-}
-
-function sum(arr, f){ return arr.reduce((s,r)=>s+(f(r)||0),0); }
-
-function renderKPIs(pd, pr){
-  const pdAge2 = pd.filter(r=>r.slab!=='0-2 Days');
-  const prAge2 = pr.filter(r=>r.slab!=='0-2 Days');
-  const pdOver10 = pd.filter(r=>r.age!=null && r.age>10).length;
-  const prOver10 = pr.filter(r=>r.age!=null && r.age>10).length;
-  const pdOver20 = pd.filter(r=>r.age!=null && r.age>20).length;
-  const prOver20 = pr.filter(r=>r.age!=null && r.age>20).length;
-  const pdOldest = Math.max(0, ...pd.map(r=>r.age||0));
-  const prOldest = Math.max(0, ...pr.map(r=>r.age||0));
-  const kpis = [
-    ['Pending dispatch TOs — aging 2+ days', pdAge2.length, 'excl. 0-2 day slab', ''],
-    ['Pending dispatch — aging 2+ days units', sum(pdAge2,r=>r.qty).toLocaleString(), 'pending qty', ''],
-    ['Pending dispatch TOs > 10 days', pdOver10, pdOver10>0?'flagged':'none', pdOver10>0?'c-red':''],
-    ['Oldest pending dispatch TO', pdOldest+'d', 'max age in view', 'c-teal'],
-
-    ['Pending receiving TOs — aging 2+ days', prAge2.length, 'excl. 0-2 day slab', 'c-orange'],
-    ['Pending receiving — aging 2+ days units', sum(prAge2,r=>r.qty).toLocaleString(), 'pending qty', 'c-orange'],
-    ['Pending receiving TOs > 10 days', prOver10, prOver10>0?'flagged':'none', prOver10>0?'c-red':''],
-    ['Oldest pending receiving TO', prOldest+'d', 'max age in view', 'c-teal'],
-
-    ['Pending dispatch TOs > 20 days', pdOver20, pdOver20>0?'flagged':'none', pdOver20>0?'c-red':''],
-    ['Pending receiving TOs > 20 days', prOver20, prOver20>0?'flagged':'none', prOver20>0?'c-red':''],
-  ];
-  document.getElementById('kpiRow').innerHTML = kpis.map(([label,val,sub,cls])=>
-    '<div class="kpi '+cls+'"><div class="label">'+label+'</div><div class="value">'+val+'</div><div class="sub">'+sub+'</div></div>'
-  ).join('');
-}
-
-function destroy(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
-
-const dlWhite = { color:'#fff', font:{weight:'bold', size:10}, anchor:'end', align:'start' };
-const dlDark = { color:'#16202B', font:{weight:'bold', size:10}, anchor:'end', align:'right', offset:4 };
-
-function renderRegionChart(pd, pr){
-  destroy('region');
-  const regions = [...new Set(pd.concat(pr).map(r=>r.region))].sort();
-  const pdCounts = regions.map(rg=>pd.filter(r=>r.region===rg).length);
-  const prCounts = regions.map(rg=>pr.filter(r=>r.region===rg).length);
-  charts.region = new Chart(document.getElementById('regionChart'), {
-    type:'bar',
-    data:{ labels:regions, datasets:[
-      { label:'Pending dispatch', data:pdCounts, backgroundColor:'#2A78D6', borderRadius:4 },
-      { label:'Pending receiving', data:prCounts, backgroundColor:'#EB6834', borderRadius:4 }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ position:'top', labels:{boxWidth:12, font:{size:11}} }, datalabels:{color:'#16202B', anchor:'end', align:'top', font:{size:9,weight:'bold'}} },
-      scales:{ x:{grid:{display:false}, ticks:{font:{size:10}}}, y:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}} } }
-  });
-}
-
-function renderSlabChart(pd, pr){
-  destroy('slab');
-  const order = ['0-2 Days','3-5 Days','6-10 Days','10+ Days'];
-  const pdCounts = order.map(s=>pd.filter(r=>r.slab===s).length);
-  const prCounts = order.map(s=>pr.filter(r=>r.slab===s).length);
-  charts.slab = new Chart(document.getElementById('slabChart'), {
-    type:'bar',
-    data:{ labels:order, datasets:[
-      { label:'Pending dispatch', data:pdCounts, backgroundColor:'#2A78D6', borderRadius:4 },
-      { label:'Pending receiving', data:prCounts, backgroundColor:'#EB6834', borderRadius:4 }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ position:'top', labels:{boxWidth:12, font:{size:11}} }, datalabels:{color:'#16202B', anchor:'end', align:'top', font:{size:9,weight:'bold'}} },
-      scales:{ x:{grid:{display:false}, ticks:{font:{size:10}}}, y:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}} } }
-  });
-}
-
-function groupCount(arr, key){
-  const c = {};
-  arr.forEach(r=>{ c[r[key]] = (c[r[key]]||0)+1; });
-  return Object.entries(c).sort((a,b)=>b[1]-a[1]);
-}
-
-function renderCmCharts(pd, pr){
-  destroy('cmD'); destroy('cmR');
-  const dEntries = groupCount(pd, 'cm');
-  const rEntries = groupCount(pr, 'cm');
-  const dh = Math.max(220, dEntries.length*28+60);
-  const rh = Math.max(220, rEntries.length*28+60);
-  document.getElementById('cmDispatchChart').parentElement.style.height = dh+'px';
-  document.getElementById('cmReceivingChart').parentElement.style.height = rh+'px';
-  charts.cmD = new Chart(document.getElementById('cmDispatchChart'), {
-    type:'bar',
-    data:{ labels:dEntries.map(e=>e[0]), datasets:[{ data:dEntries.map(e=>e[1]), backgroundColor:'#2A78D6', borderRadius:4 }] },
-    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, datalabels:dlDark },
-      scales:{ x:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}}, y:{grid:{display:false}, ticks:{font:{size:10}}} } }
-  });
-  charts.cmR = new Chart(document.getElementById('cmReceivingChart'), {
-    type:'bar',
-    data:{ labels:rEntries.map(e=>e[0]), datasets:[{ data:rEntries.map(e=>e[1]), backgroundColor:'#EB6834', borderRadius:4 }] },
-    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, datalabels:dlDark },
-      scales:{ x:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}}, y:{grid:{display:false}, ticks:{font:{size:10}}} } }
-  });
-}
-
-function renderTop10Charts(pd, pr){
-  destroy('t10D'); destroy('t10R');
-  const pdEx = pd.filter(r=>r.slab!=='0-2 Days');
-  const prEx = pr.filter(r=>r.slab!=='0-2 Days');
-  const dEntries = groupCount(pdEx, 'store').slice(0,10);
-  const rEntries = groupCount(prEx, 'store').slice(0,10);
-  charts.t10D = new Chart(document.getElementById('top10DispatchChart'), {
-    type:'bar',
-    data:{ labels:dEntries.map(e=>e[0]), datasets:[{ data:dEntries.map(e=>e[1]), backgroundColor:'#E34948', borderRadius:4 }] },
-    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, datalabels:dlDark },
-      scales:{ x:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}}, y:{grid:{display:false}, ticks:{font:{size:10}}} } }
-  });
-  charts.t10R = new Chart(document.getElementById('top10ReceivingChart'), {
-    type:'bar',
-    data:{ labels:rEntries.map(e=>e[0]), datasets:[{ data:rEntries.map(e=>e[1]), backgroundColor:'#F2A93C', borderRadius:4 }] },
-    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, datalabels:dlDark },
-      scales:{ x:{beginAtZero:true, grid:{color:'#EEF2F7'}, ticks:{font:{size:10}}}, y:{grid:{display:false}, ticks:{font:{size:10}}} } }
-  });
-}
-
-function renderRouteTables(pd, pr){
-  const fill = (id, rows)=>{
-    const entries = groupCount(rows, 'route');
-    document.querySelector('#'+id+' tbody').innerHTML = entries.map(([route,count])=>
-      '<tr><td>'+route+'</td><td>'+count.toLocaleString()+'</td></tr>').join('') ||
-      '<tr><td colspan="2" style="color:var(--ink-mute);">No rows match the current filters.</td></tr>';
-  };
-  fill('routeTablePD', pd);
-  fill('routeTablePR', pr);
-}
-
-function rowVal(r, key){
-  switch(key){
-    case 'transfer': return r.transfer||'';
-    case 'store': return r.store;
-    case 'region': return r.region;
-    case 'route': return r.route;
-    case 'cm': return r.cm;
-    case 'qty': return r.qty||0;
-    case 'date': return r.drivingDate ? r.drivingDate.getTime() : -1;
-    case 'age': return r.age==null ? -1 : r.age;
-    case 'slab': return r.slab;
-    default: return '';
-  }
-}
-function sortRows(rows, sortState){
-  const {key, dir} = sortState;
-  return [...rows].sort((a,b)=>{
-    const av=rowVal(a,key), bv=rowVal(b,key);
-    if(typeof av==='number') return dir==='asc' ? av-bv : bv-av;
-    return dir==='asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
-  });
-}
-
-function renderTable(flow, rows){
-  const sortState = flow==='pd' ? SORT_PD : SORT_PR;
-  const sorted = sortRows(rows, sortState);
-  const bodyId = flow==='pd' ? 'pdTableBody' : 'prTableBody';
-  const countId = flow==='pd' ? 'pdTableCount' : 'prTableCount';
-  document.getElementById(bodyId).innerHTML = sorted.slice(0,500).map(r=>{
-    const tn = r.transfer||'';
-    const remVal = (remarksMap[tn]||'').replace(/"/g,'&quot;');
-    const remarkCell = LOCKED_CLUSTER_CODE
-      ? '<td>'+(remVal ? remVal.replace(/&quot;/g,'"') : '<span style="color:var(--ink-mute);">—</span>')+'</td>'
-      : '<td><input type="text" class="remark-input" data-tn="'+tn+'" value="'+remVal+'" placeholder="Add remark…" oninput="updateRemark(this)" onblur="submitRemarkToLive(this)"></td>';
-    const val = validationMap[tn];
-    let reviewCell;
-    if(LOCKED_CLUSTER_CODE){
-      reviewCell = (val && val.by)
-        ? '<td><span class="review-badge ok">&#10003; Reviewed</span></td>'
-        : (remVal ? '<td><button class="review-btn" onclick="validateRemarkLive(\''+tn+'\', this)">Review</button></td>' : '<td><span style="color:var(--ink-mute);">No remark yet</span></td>');
-    } else {
-      reviewCell = (val && val.by) ? '<td><span class="review-badge ok">&#10003; Reviewed</span></td>' : '<td><span style="color:var(--ink-mute);">—</span></td>';
-    }
-    return '<tr class="'+(r.age!=null && r.age>10 ? 'crit' : '')+'">'+
-    '<td>'+tn+'</td>'+
-    '<td>'+r.store+' — '+(r.storeName||'')+'</td>'+
-    '<td>'+r.region+'</td>'+
-    '<td>'+r.route+'</td>'+
-    '<td>'+r.cm+'</td>'+
-    '<td>'+(r.qty||0).toLocaleString()+'</td>'+
-    '<td>'+fmtDate(r.drivingDate)+'</td>'+
-    '<td>'+(r.age==null?'—':r.age)+'</td>'+
-    '<td>'+r.slab+'</td>'+
-    remarkCell + reviewCell +
-    '</tr>';
-  }).join('');
-  document.getElementById(countId).textContent = rows.length.toLocaleString() + ' matching lines' + (rows.length>500 ? ' (first 500 shown)' : '');
-  window['_export_'+flow] = sorted;
-}
-
-function buildCmStoreSummary(rows){
-  const map = {};
-  rows.forEach(r=>{
-    const key = r.cm+'|'+r.store+'|'+r.region;
-    if(!map[key]) map[key] = { cm:r.cm, store:r.store, name:r.storeName, region:r.region, count:0, qty:0 };
-    map[key].count += 1;
-    map[key].qty += (r.qty||0);
-  });
-  return Object.values(map).sort((a,b)=>b.qty-a.qty);
-}
-
-function renderSummaryTables(pd, pr){
-  const fill = (id, rows)=>{
-    const lines = buildCmStoreSummary(rows);
-    document.querySelector('#'+id+' tbody').innerHTML = lines.map(l=>
-      '<tr><td>'+l.cm+'</td><td>'+l.store+' — '+(l.name||'')+'</td><td>'+l.region+'</td><td>'+l.count.toLocaleString()+'</td><td>'+l.qty.toLocaleString()+'</td></tr>'
-    ).join('') || '<tr><td colspan="5" style="color:var(--ink-mute);">No data.</td></tr>';
-  };
-  fill('summaryTablePD', pd);
-  fill('summaryTablePR', pr);
-  window._summary_pd = buildCmStoreSummary(pd);
-  window._summary_pr = buildCmStoreSummary(pr);
-}
-
-function exportSummaryCSV(flow){
-  const lines = flow==='pd' ? window._summary_pd : window._summary_pr;
-  if(!lines) return;
-  const csv = ['Cluster Manager,Store Code,Store Name,Region,TO Count,Pending Qty'];
-  lines.forEach(l=>{
-    csv.push('"'+l.cm+'","'+l.store+'","'+(l.name||'').replace(/"/g,'""')+'","'+l.region+'",'+l.count+','+l.qty);
-  });
-  const blob = new Blob([csv.join('\n')], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = (flow==='pd' ? 'Cluster_Manager_Store_Pending_Dispatch' : 'Cluster_Manager_Store_Pending_Receiving') + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function exportCSV(flow){
-  const rows = window['_export_'+flow] || [];
-  const headers = ['Transfer No','Store Code','Store Name','Region','Sub Region','Route','Cluster Manager','Pending Qty','Driving Date','Age (Days)','Age Slab','Remarks'];
-  const lines = [headers.join(',')];
-  rows.forEach(r=>{
-    const cells = [
-      r.transfer||'', r.store, (r.storeName||'').replace(/,/g,' '), r.region, r.div,
-      r.route, r.cm, r.qty||0, fmtDate(r.drivingDate), r.age==null?'':r.age, r.slab,
-      remarksMap[r.transfer||'']||''
-    ];
-    lines.push(cells.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(','));
-  });
-  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = (flow==='pd' ? 'Pending_Dispatch_Lines' : 'Pending_Receiving_Lines') + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
 </script>
 </body>
 </html>
