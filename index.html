@@ -150,9 +150,10 @@
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:16px;">
+    <span id="savingFlag" style="display:none;font-size:11px;color:#e8b34a;font-weight:600;">● Saving…</span>
     <div class="clock" id="clockBox"></div>
     <button class="btn sm secondary" id="manualRefreshBtn" title="Refresh now">↻ Refresh</button>
-    <a id="adminEntryLink" title="Administrator access" style="font-size:11px;color:#7c93a3;cursor:pointer;text-decoration:underline;white-space:nowrap;">Admin</a>
+    <button class="btn sm secondary" id="logoutBtn" title="Log out" style="display:none;">Log out</button>
   </div>
 </header>
 
@@ -183,7 +184,7 @@ const STORES = [
   {code:'S2004EMP', name:'Emporium Mall, Lahore', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
   {code:'S4004GRT', name:'Kutchery road, Gujrat', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
   {code:'S2003DHA', name:'Y-Block DHA, Lahore', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
-  {code:'S4002FSD', name:'Jaranwala Road, Faislabad', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
+  {code:'S4002FSD', name:'Jaranwala Road, Faisalabad', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
   {code:'S4015SKP', name:'Sargodha Road, Sheikhpura', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
   {code:'S4012SKT', name:'V-Mall, Sialkot', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
   {code:'S2006MOD', name:'Mall of Defence, Lahore', cluster:'Closed', clusterManager:'Unassigned', region:'Central', closed:true},
@@ -192,7 +193,7 @@ const STORES = [
   {code:'S3009SWT', name:'Blue Area, Swat', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
   {code:'S3002NCA', name:'Arcard City, Wah', cluster:'Closed', clusterManager:'Unassigned', region:'North', closed:true},
   {code:'S3006WTC', name:'Giga Mall WTC, Rawalpindi', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
-  {code:'S4006MBH', name:'Jail Road, Mandi Bahauddin', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
+  {code:'S4006MBH', name:'Jail Road, Mandi Bahauddin', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:true},
   {code:'S3005RWP', name:'Pindi Saddar, Rawalpindi', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
   {code:'S4010SGD', name:'Sargodha Store', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
   {code:'S3003PWD', name:'PWD Islamabad Store', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
@@ -202,22 +203,22 @@ const STORES = [
   {code:'S3001CEN', name:'Centaurus Mall, Islamabad', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
   {code:'S4014MIR', name:'Dolphin Chowk, Mirpur', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
   {code:'S5004DMT', name:'DMTR, Karachi', cluster:'S1', clusterManager:'Imran Azeem', region:'South', closed:false},
-  {code:'S5009BMH', name:'Autobahn Road, Hyderabad', cluster:'S2', clusterManager:'Imran Azeem', region:'South', closed:false},
-  {code:'S5008LUK', name:'Lucky One Mall, Karachi', cluster:'S2', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S5009BMH', name:'Autobahn Road, Hyderabad', cluster:'S2', clusterManager:'Syed Bilal Hussain', region:'South', closed:false},
+  {code:'S5008LUK', name:'Lucky One Mall, Karachi', cluster:'S2', clusterManager:'Syed Bilal Hussain', region:'South', closed:false},
   {code:'S5002DMC', name:'DMC, Karachi', cluster:'S1', clusterManager:'Imran Azeem', region:'South', closed:false},
   {code:'S5005GJK', name:'Gulistan-e-Johar, Karachi', cluster:'Closed', clusterManager:'Unassigned', region:'South', closed:true},
-  {code:'S5003DMH', name:'Dolmen Mall Hyderi', cluster:'S2', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S5003DMH', name:'Dolmen Mall Hyderi', cluster:'S2', clusterManager:'Imran Azeem', region:'South', closed:true},
   {code:'S6001FOL', name:'UOL FOL, Lahore', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
   {code:'S5006KDA', name:'Gulshan KDA, Karachi', cluster:'Closed', clusterManager:'Unassigned', region:'South', closed:true},
   {code:'S6002FOS', name:'Ferozwatwan FOL, Sheikhpura', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
   {code:'S5001ATR', name:'Atrium Mall Sadar', cluster:'S1', clusterManager:'Imran Azeem', region:'South', closed:false},
-  {code:'S4013JHG', name:'Jhangg Store', cluster:'Franchise', clusterManager:'Unassigned', region:'Central', closed:false},
+  {code:'S4013JHG', name:'Jhangg Store', cluster:'Franchise', clusterManager:'Unassigned', region:'Central', closed:true},
   {code:'S6003KBL', name:'Karim Block, Lahore', cluster:'Closed', clusterManager:'Unassigned', region:'Central', closed:true},
   {code:'S5007KEH', name:'Kehkashan, Karachi', cluster:'Closed', clusterManager:'Unassigned', region:'South', closed:true},
   {code:'S4007MSQ', name:'Misaq ul Mall, Fasilabad', cluster:'Closed', clusterManager:'Unassigned', region:'Central', closed:true},
   {code:'S2009LCM', name:'Lake City Mall, Lahore', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
   {code:'S2010WTL', name:'Wapda Town Lahore', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
-  {code:'S5010SOM', name:'Square One Mall, Karachi', cluster:'S2', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S5010SOM', name:'Square One Mall, Karachi', cluster:'S2', clusterManager:'Syed Bilal Hussain', region:'South', closed:false},
   {code:'S4016RYK', name:'Rahim Yar Khan Store', cluster:'C1', clusterManager:'Ali Hyder', region:'Central', closed:false},
   {code:'S5011BHD', name:'Bahadurabad Store', cluster:'S1', clusterManager:'Imran Azeem', region:'South', closed:false},
   {code:'S2011FSM', name:'Fortress Square Mall, Lahore', cluster:'Closed', clusterManager:'Unassigned', region:'Central', closed:true},
@@ -226,9 +227,9 @@ const STORES = [
   {code:'S3012CEN2', name:'Centaurus Mall 2, Islamabad', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
   {code:'S2012DML', name:'Dolmen Mall Lahore', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
   {code:'S4019KMG', name:'King Mall Gujranwala', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
-  {code:'S3013F11', name:'F-11 Markaz', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:false},
+  {code:'S3013F11', name:'F-11 Markaz', cluster:'N2', clusterManager:'Abdul Rehman', region:'North', closed:true},
   {code:'S3014MPS', name:'Mall of Pindi Saddar', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
-  {code:'S5012HBK', name:'Hyderi Bazar Largesse Karachi', cluster:'S2', clusterManager:'Imran Azeem', region:'South', closed:false},
+  {code:'S5012HBK', name:'Hyderi Bazar Largesse Karachi', cluster:'S2', clusterManager:'Syed Bilal Hussain', region:'South', closed:false},
   {code:'S4021MBH2', name:'Jail Road Mandi Bahauddin-02 Store', cluster:'C3', clusterManager:'Usman Saeed', region:'Central', closed:false},
   {code:'S3016GGB', name:'Giga Boutique', cluster:'N1', clusterManager:'Muhammad Usman Yousaf', region:'North', closed:false},
   {code:'S2013BTL', name:'Bahria Town Lahore', cluster:'C2', clusterManager:'Yasir Siddiqui', region:'Central', closed:false},
@@ -287,6 +288,7 @@ function baseTxn(t){
     discountValue: t.discountValue || 0, // sum of (full-price value - actual) across discounted line items
     barcodes: t.barcodes || [],      // [{barcode, qty, amount, fullPrice}] — line-level detail under this transaction
     origTransaction: t.origTransaction || '', // Original (sale) transaction number from the report
+    uploadId: t.uploadId || null, // which Admin upload batch this came from — used to remove a bad/duplicate upload without touching anything else
     storeApproval: submitted ? true : false,
     storeRemarks: submitted ? t.storeRemarks || '' : '',
     // Reason for Return — required before submission, alongside store
@@ -316,8 +318,8 @@ let screen = 'hq'; // hq | store | cluster | regional | admin
 const OPEN_STORES = STORES.filter(s=>!s.closed);
 let storeAuth = { unlocked:false, storeCode: OPEN_STORES[0].code, password:'' };
 let clusterAuth = { unlocked:false, clusterManager: CLUSTER_MANAGERS[0], passcode:'' };
-// Admin login now validates server-side against the Credentials sheet via
-// Code.gs — no admin password is stored in this file. See verifyLogin() below.
+// All login now validates server-side against the Credentials sheet via
+// Code.gs — no password is stored in this file. See verifyPasswordLogin() below.
 let adminAuth = { unlocked:false };
 let adminSubView = 'upload'; // upload | audit
 let ctx = { region: REGIONS[0] };
@@ -356,20 +358,62 @@ async function loadData(){
     {timestamp:new Date().toISOString(), user:'System', role:'System', action:'Backend unreachable — showing empty local state', transaction:'—', prevStatus:'—', newStatus:'—', remarks:''}
   ], uploadLog: [], lastUploadTs: null };
 }
-async function saveData(data){
+// Server-side login: password ONLY. The backend scans the Credentials
+// sheet for a row matching this password and tells us which role +
+// identifier it belongs to — the client never says "check me as store
+// S2001AIT", because before this call the client doesn't know who it is.
+async function verifyPasswordLogin(password){
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'loginByPassword', secret: SHARED_SECRET, password })
+    });
+    const json = await res.json();
+    if(json && json.ok) return { role: json.role, identifier: json.identifier };
+    return null;
+  }catch(e){
+    showToast('Could not reach the backend to verify login. ('+(e.message||e)+')', 6000);
+    return null;
+  }
+}
+// How many saves are currently in flight. Every save site below now
+// AWAITS this instead of firing it and moving on — previously the app
+// called saveData(DATA) and immediately kept going, so a refresh (or the
+// 60s auto-refresh GET) could land while Apps Script was still mid-way
+// through clearing and rewriting the Transactions/LineItems sheets, and
+// the read would come back looking like the data had been wiped. The
+// beforeunload guard below stops that specific case at the browser level
+// too: you cannot navigate away or refresh while a save is still pending.
+let pendingSaveCount = 0;
+window.addEventListener('beforeunload', function(e){
+  if(pendingSaveCount > 0){
+    e.preventDefault();
+    e.returnValue = 'A change is still saving — leaving now may lose it.';
+    return e.returnValue;
+  }
+});
+// Every write below goes through this. It sends ONLY the rows a given
+// action actually changed — never the whole transactions/audit/upload
+// dataset — and the backend (Code.gs) patches/appends just those rows.
+// This is what makes concurrent users safe: if a store submits a draft
+// at the same moment Admin is mid-upload, each save touches its own
+// row(s) only, so neither can silently overwrite the other's change.
+// (Sending the FULL in-memory DATA blob on every save — which this
+// build used to do — meant whoever's save landed second overwrote
+// everyone else's save with the stale snapshot their own browser had
+// loaded. That was the real "multiple users, data disappears" risk.)
+async function postAction(action, data){
+  pendingSaveCount++;
+  renderSaveIndicator();
   try{
     const res = await fetch(APPS_SCRIPT_URL, {
       method:'POST',
       headers:{'Content-Type':'text/plain;charset=utf-8'}, // plain text avoids a CORS preflight Apps Script can't answer
-      body: JSON.stringify({ action:'save', secret: SHARED_SECRET, data })
+      body: JSON.stringify({ action, secret: SHARED_SECRET, data })
     });
     const json = await res.json();
     if(!json || !json.ok){
-      // The request reached Apps Script but was rejected (e.g. SHARED_SECRET
-      // mismatch) — this used to fail silently, leaving the change only in
-      // this browser's memory until the next refresh wiped it out. Now it's
-      // surfaced loudly instead, because a compliance tool silently losing
-      // submitted data is worse than an ugly error message.
       showToast('SAVE REJECTED BY BACKEND — this change was NOT written to the Sheet and will be lost on refresh. ('+(json&&json.error?json.error:'unknown error')+')', 8000);
       return false;
     }
@@ -377,7 +421,40 @@ async function saveData(data){
   }catch(e){
     showToast('Save failed — changes may not persist. ('+(e.message||e)+')', 8000);
     return false;
+  }finally{
+    pendingSaveCount--;
+    renderSaveIndicator();
   }
+}
+// Legacy full-resync path — no longer called by any action below, kept
+// only in case you ever need to force-overwrite the whole sheet (e.g.
+// restoring from a backup blob). Do NOT wire this back into per-action
+// saves; that's the bug that caused the concurrent-user overwrite risk.
+async function saveData(data){ return postAction('save', data); }
+// One or more transactions changed (checkbox, remarks, reason, draft
+// submit) but no review round and no new rows — patches just those
+// transaction rows plus any new audit entries.
+async function patchTransactions(txns, auditEntries){
+  return postAction('patchTransactions', { transactions: txns, auditEntries: auditEntries||[] });
+}
+// A Cluster Manager decision (sign off / send for re-review): patches the
+// one transaction row, appends exactly one new ReviewHistory row, and one
+// audit entry.
+async function saveReviewDecision(txn, reviewEntry, auditEntry){
+  return postAction('reviewDecision', { transaction: txn, reviewEntry, auditEntry });
+}
+// Admin upload: appends brand-new transaction + line-item rows (these IDs
+// never existed before, so there's nothing to collide with) plus one
+// upload-log row and one audit entry.
+async function saveUpload(newTxns, uploadLogEntry, auditEntry){
+  return postAction('appendUpload', { transactions: newTxns, uploadLogEntry, auditEntry });
+}
+function renderSaveIndicator(){
+  const box = document.getElementById('clockBox');
+  if(!box) return;
+  box.dataset.saving = pendingSaveCount>0 ? '1' : '0';
+  const flag = document.getElementById('savingFlag');
+  if(flag) flag.style.display = pendingSaveCount>0 ? 'inline' : 'none';
 }
 // Server-side credential check. role: 'store' | 'cluster' | 'regional' | 'admin'.
 // identifier: store code / cluster manager name / region name / admin username.
@@ -396,8 +473,10 @@ async function verifyLogin(role, identifier, password){
   }
 }
 function addAudit(entry){
-  DATA.auditLog.unshift(Object.assign({timestamp:new Date().toISOString()}, entry));
+  const full = Object.assign({timestamp:new Date().toISOString()}, entry);
+  DATA.auditLog.unshift(full);
   if(DATA.auditLog.length>500) DATA.auditLog.length = 500;
+  return full; // callers use this to send the SAME entry to the backend, scoped, instead of the whole log
 }
 
 /* =========================================================
@@ -433,11 +512,30 @@ const NAV_ITEMS = [
   ['store','Store Entry'],
   ['cluster','Cluster Review'],
   ['regional','Regional Manager Insights'],
+  ['admin','Admin / Upload'],
 ];
 
+// Which nav tabs a role is allowed to see/use, keyed the same as
+// NAV_ITEMS. Only called once render() has already confirmed someone is
+// logged in (see isLoggedIn() / render()) — there is no "nobody logged
+// in yet" case here anymore, so there's nothing to leak.
+function permittedTabs(){
+  if(adminAuth.unlocked) return ['hq','store','cluster','regional','admin'];
+  if(storeAuth.unlocked) return ['store'];
+  if(clusterAuth.unlocked) return ['cluster']; // no HQ Dashboard — Cluster Manager is scoped to their own cluster only
+  if(regionalAuth.unlocked) return ['hq','regional'];
+  return [];
+}
+
 function renderShell(){
+  const allowed = permittedTabs();
+  // If the current screen isn't allowed for whoever is logged in (e.g. a
+  // role just logged out, or logged in as a different role), snap to the
+  // first tab that role is actually allowed to see instead of leaving a
+  // stale/forbidden screen rendered.
+  if(screen!=='admin' && !allowed.includes(screen)) screen = allowed[0];
   const tabBar = document.getElementById('tabBar');
-  tabBar.innerHTML = NAV_ITEMS.map(([id,label])=>`<button data-nav="${id}" class="${screen===id?'active':''}">${esc(label)}</button>`).join('');
+  tabBar.innerHTML = NAV_ITEMS.filter(([id])=>allowed.includes(id)).map(([id,label])=>`<button data-nav="${id}" class="${screen===id?'active':''}">${esc(label)}</button>`).join('');
   tabBar.querySelectorAll('button').forEach(b=>{
     b.onclick=()=>{ screen=b.dataset.nav; render(); };
   });
@@ -454,10 +552,29 @@ function renderClock(){
 
 /* =========================================================
    RENDER: MAIN ROUTER
+   ---------------------------------------------------------
+   Nothing renders — not even the HQ Dashboard tab, which used to be
+   open with zero login — until one of the four auth objects is
+   unlocked. The single password gate below is the ENTIRE app for an
+   unauthenticated visitor.
    ========================================================= */
+function isLoggedIn(){
+  return adminAuth.unlocked || storeAuth.unlocked || clusterAuth.unlocked || regionalAuth.unlocked;
+}
 function render(){
-  renderShell();
   const main = document.getElementById('mainArea');
+  const tabBar = document.getElementById('tabBar');
+  const logoutBtn = document.getElementById('logoutBtn');
+  if(!isLoggedIn()){
+    tabBar.innerHTML = '';
+    logoutBtn.style.display = 'none';
+    main.innerHTML = renderPasswordGate();
+    bindDynamicHandlers();
+    renderClock();
+    return;
+  }
+  logoutBtn.style.display = '';
+  renderShell();
   // Admin, once logged in, can open any Store / Cluster / Regional tab
   // without a second password — that's the whole point of being Admin.
   // A default selection is picked automatically the first time so the
@@ -471,75 +588,38 @@ function render(){
     clusterAuth.unlocked = true;
     regionalAuth.unlocked = true;
   }
-  if(screen==='store') main.innerHTML = storeAuth.unlocked ? renderStoreView() : renderStoreLogin();
-  else if(screen==='cluster') main.innerHTML = clusterAuth.unlocked ? renderClusterView() : renderClusterLogin();
-  else if(screen==='regional') main.innerHTML = regionalAuth.unlocked ? renderRegionalView() : renderRegionalLogin();
+  if(screen==='store') main.innerHTML = renderStoreView();
+  else if(screen==='cluster') main.innerHTML = renderClusterView();
+  else if(screen==='regional') main.innerHTML = renderRegionalView();
   else if(screen==='hq') main.innerHTML = renderHQView();
-  else if(screen==='admin') main.innerHTML = adminAuth.unlocked ? renderAdminView() : renderAdminLogin();
+  else if(screen==='admin') main.innerHTML = renderAdminView();
   bindDynamicHandlers();
 }
 
+function logout(){
+  storeAuth = { unlocked:false, storeCode: OPEN_STORES[0].code, password:'' };
+  clusterAuth = { unlocked:false, clusterManager: CLUSTER_MANAGERS[0], passcode:'' };
+  regionalAuth = { unlocked:false, region: REGIONS[0] };
+  adminAuth = { unlocked:false };
+  screen = 'hq';
+  render();
+}
+
 /* =========================================================
-   LOGIN GATES
+   LOGIN GATE — single password field. The password alone (checked
+   server-side against the Credentials sheet) decides which of the
+   four views below opens; the client never asks "are you a store,
+   cluster, regional or admin user" up front.
    ========================================================= */
-function renderStoreLogin(){
-  const sel = storeAuth.storeCode;
-  const store = storeByCode(sel);
+function renderPasswordGate(){
   return `
     <div class="login-gate">
       <div class="lockicon">🔒</div>
-      <h1>Store Entry</h1>
-      <p>Select your store and enter your store password to view and submit today's return transactions.</p>
-      <span class="field-label">Select your store</span>
-      <select id="loginStoreSelect">${OPEN_STORES.map(s=>`<option value="${s.code}" ${sel===s.code?'selected':''}>${esc(s.name)} (${esc(s.code)})</option>`).join('')}</select>
-      <span class="field-label">Cluster Manager (auto)</span>
-      <div class="auto-field">${esc(store.clusterManager)} · ${esc(store.cluster)}</div>
-      <span class="field-label">Store password</span>
-      <input type="text" id="loginStorePass" placeholder="Enter your store password">
-      <button class="btn" id="storeUnlockBtn">Unlock</button>
-    </div>`;
-}
-function renderClusterLogin(){
-  const sel = clusterAuth.clusterManager;
-  return `
-    <div class="login-gate">
-      <div class="lockicon">🔒</div>
-      <h1>Cluster Review</h1>
-      <p>Select your name and enter your review passcode. You'll see only your assigned stores.</p>
-      <span class="field-label">Reviewing as</span>
-      <select id="loginClusterSelect">${CLUSTER_MANAGERS.map(m=>`<option value="${esc(m)}" ${sel===m?'selected':''}>${esc(m)}</option>`).join('')}</select>
-      <span class="field-label">Passcode</span>
-      <input type="text" id="loginClusterPass" placeholder="Enter your cluster manager passcode">
-      <button class="btn" id="clusterUnlockBtn">Unlock</button>
-    </div>`;
-}
-
-function renderRegionalLogin(){
-  const sel = regionalAuth.region;
-  return `
-    <div class="login-gate">
-      <div class="lockicon">🔒</div>
-      <h1>Regional Manager Insights</h1>
-      <p>Select your region and enter your access passcode.</p>
-      <span class="field-label">Region</span>
-      <select id="loginRegionalSelect">${REGIONS.map(r=>`<option value="${esc(r)}" ${sel===r?'selected':''}>${esc(r)}</option>`).join('')}</select>
-      <span class="field-label">Passcode</span>
-      <input type="text" id="loginRegionalPass" placeholder="Enter your regional manager passcode">
-      <button class="btn" id="regionalUnlockBtn">Unlock</button>
-    </div>`;
-}
-
-function renderAdminLogin(){
-  return `
-    <div class="login-gate">
-      <div class="lockicon">🔒</div>
-      <h1>Admin Login</h1>
-      <p>Restricted to system administrators. This tab is not shown to store, cluster or regional users.</p>
-      <span class="field-label">Username</span>
-      <input type="text" id="loginAdminUser" placeholder="Admin username">
-      <span class="field-label">Password</span>
-      <input type="text" id="loginAdminPass" placeholder="Admin password">
-      <button class="btn" id="adminUnlockBtn">Unlock</button>
+      <h1>Sapphire Retail — Compliance Access</h1>
+      <p>Enter your access code. What you see next depends on the code — store, cluster, regional or head office.</p>
+      <span class="field-label">Access code</span>
+      <input type="password" id="gatePass" placeholder="Enter your access code" autocomplete="off">
+      <button class="btn" id="gateUnlockBtn">Unlock</button>
     </div>`;
 }
 
@@ -668,6 +748,30 @@ function reasonCell(t, editable){
 /* =========================================================
    CLUSTER MANAGER VIEW
    ========================================================= */
+// Shared by both Cluster Review (own cluster's stores) and Regional
+// Manager Insights (every store in the region) — same columns, same
+// per-store numbers, purely informational either way (no action inputs
+// live in this table in either view).
+function storeSummaryRows(stores, txns){
+  return stores.map(s=>{
+    const ts = txns.filter(t=>t.storeCode===s.code);
+    const c = st => ts.filter(t=>t.status===st).length;
+    const cat = code => { const g = ts.filter(t=>t.category===code); return {count:g.length, qty:g.reduce((s,t)=>s+t.qty,0), amt:g.reduce((s,t)=>s+t.amount,0)}; };
+    const refund=cat('refund'), over30=cat('over30'), fullprice=cat('fullprice');
+    return `<tr>
+      <td>${esc(s.name)}</td>
+      <td class="num-cell">${refund.count}</td><td class="num-cell">${refund.qty}</td><td class="num-cell">${money(refund.amt)}</td>
+      <td class="num-cell">${over30.count}</td><td class="num-cell">${over30.qty}</td><td class="num-cell">${money(over30.amt)}</td>
+      <td class="num-cell">${fullprice.count}</td><td class="num-cell">${fullprice.qty}</td><td class="num-cell">${money(fullprice.amt)}</td>
+      <td class="num-cell">${c('Signed Off')}</td>
+      <td class="num-cell">${c('Awaiting Review')}</td>
+      <td class="num-cell">${c('Re-Review')}</td>
+      <td class="num-cell">${c('Not Submitted')}</td>
+    </tr>`;
+  }).join('');
+}
+const STORE_SUMMARY_HEAD = `<tr><th>Store</th><th>Refund Txns</th><th>Refund Qty</th><th>Refund Value</th><th>Return&gt;30 Txns</th><th>Return&gt;30 Qty</th><th>Return&gt;30 Value</th><th>Full Price Txns</th><th>Full Price Qty</th><th>Full Price Value</th><th>Signed Off</th><th>Awaiting</th><th>Re-Review</th><th>Not Submitted</th></tr>`;
+
 function renderClusterView(){
   const mgr = clusterAuth.clusterManager;
   const stores = STORES.filter(s=>s.clusterManager===mgr);
@@ -684,25 +788,7 @@ function renderClusterView(){
     return true;
   });
 
-  const summaryRows = stores.map(s=>{
-    const ts = summaryScope.filter(t=>t.storeCode===s.code);
-    const c = st => ts.filter(t=>t.status===st).length;
-    // Per-category performance — distinct transaction count, summed Return
-    // Qty, and summed compliance Value — same category stats used in the
-    // Cluster/Regional/HQ KPI rows (clusterKpiRow), just scoped to one store.
-    const cat = code => { const g = ts.filter(t=>t.category===code); return {count:g.length, qty:g.reduce((s,t)=>s+t.qty,0), amt:g.reduce((s,t)=>s+t.amount,0)}; };
-    const refund=cat('refund'), over30=cat('over30'), fullprice=cat('fullprice');
-    return `<tr>
-      <td>${esc(s.name)}</td>
-      <td class="num-cell">${refund.count}</td><td class="num-cell">${refund.qty}</td><td class="num-cell">${money(refund.amt)}</td>
-      <td class="num-cell">${over30.count}</td><td class="num-cell">${over30.qty}</td><td class="num-cell">${money(over30.amt)}</td>
-      <td class="num-cell">${fullprice.count}</td><td class="num-cell">${fullprice.qty}</td><td class="num-cell">${money(fullprice.amt)}</td>
-      <td class="num-cell">${c('Signed Off')}</td>
-      <td class="num-cell">${c('Awaiting Review')}</td>
-      <td class="num-cell">${c('Re-Review')}</td>
-      <td class="num-cell">${c('Not Submitted')}</td>
-    </tr>`;
-  }).join('');
+  const summaryRows = storeSummaryRows(stores, summaryScope);
 
   const queue = all.filter(t=>t.status==='Awaiting Review').sort((a,b)=>a.date<b.date?1:-1);
   const queueLines = flattenToLines(queue);
@@ -755,7 +841,7 @@ function renderClusterView(){
     <div class="card">
       <div class="card-head"><h2>Store Summary</h2></div>
       <div class="card-body" style="overflow-x:auto;">
-        <table class="compact-table"><thead><tr><th>Store</th><th>Refund Txns</th><th>Refund Qty</th><th>Refund Value</th><th>Return&gt;30 Txns</th><th>Return&gt;30 Qty</th><th>Return&gt;30 Value</th><th>Full Price Txns</th><th>Full Price Qty</th><th>Full Price Value</th><th>Signed Off</th><th>Awaiting</th><th>Re-Review</th><th>Not Submitted</th></tr></thead>
+        <table class="compact-table"><thead>${STORE_SUMMARY_HEAD}</thead>
         <tbody>${summaryRows}</tbody></table>
       </div>
     </div>
@@ -802,23 +888,36 @@ function renderRegionalView(){
   const mgrs = [...new Set(stores.map(s=>s.clusterManager))].filter(m=>m!=='Unassigned');
   const f = regionalFilters;
 
+  // Same date-range scoping as Cluster Review's Store Summary — applies to
+  // BOTH the Cluster Manager rollup and the store-level breakdown below.
+  const regionScope = txnsFor(t=>{
+    const store = storeByCode(t.storeCode);
+    if(store.region!==region) return false;
+    if(f.dateFrom && t.date<f.dateFrom) return false;
+    if(f.dateTo && t.date>f.dateTo) return false;
+    return true;
+  });
+
   const rows = mgrs.map(m=>{
     const mgrStores = stores.filter(s=>s.clusterManager===m);
     const codes = mgrStores.map(s=>s.code);
-    const ts = txnsFor(t=>{
-      if(!codes.includes(t.storeCode)) return false;
-      if(f.dateFrom && t.date<f.dateFrom) return false;
-      if(f.dateTo && t.date>f.dateTo) return false;
-      return true;
-    });
+    const ts = regionScope.filter(t=>codes.includes(t.storeCode));
     return clusterKpiRow(m, mgrStores, ts);
   }).join('');
+
+  // Store-level breakdown, view/reporting only — Regional Manager gets no
+  // approve/sign-off controls here, same as the Cluster Manager Summary
+  // above it; only Store and Cluster roles can act on a transaction.
+  const storeRows = storeSummaryRows(stores, regionScope);
 
   return `
     <div class="session-bar"><span>Signed in for <b>${esc(region)}</b></span><a id="regionalLockBtn">Lock / switch region</a></div>
     <div class="panel-head">
       <div><h1>Regional Manager Insights</h1><p>${stores.length} stores · ${mgrs.length} cluster manager(s) in ${esc(region)}</p></div>
-      <div><span class="field-label">Region</span><select id="regionSelect">${REGIONS.map(r=>`<option ${region===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div>
+      <div><span class="field-label">Region</span>${adminAuth.unlocked
+        ? `<select id="regionSelect">${REGIONS.map(r=>`<option ${region===r?'selected':''}>${esc(r)}</option>`).join('')}</select>`
+        : `<div style="padding:8px 10px;font-weight:600;">${esc(region)}</div>`
+      }</div>
     </div>
     <div class="filters-grid" style="max-width:420px;">
       <div><span class="field-label">From date</span><input type="date" id="rFDateFrom" value="${f.dateFrom||''}"></div>
@@ -830,6 +929,12 @@ function renderRegionalView(){
       <div class="card-head"><h2>Cluster Manager Summary — ${esc(region)}</h2></div>
       <div class="card-body" style="overflow-x:auto;">
         <table class="compact-table"><thead>${CLUSTER_TABLE_HEAD}</thead><tbody>${rows}</tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Store Summary — ${esc(region)}</h2><span class="count">Review only — no approvals or sign-offs here</span></div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table class="compact-table"><thead>${STORE_SUMMARY_HEAD}</thead><tbody>${storeRows}</tbody></table>
       </div>
     </div>
   `;
@@ -918,7 +1023,10 @@ function renderAdminView(){
 
 function renderAdminUploadBody(){
   const uploads = DATA.uploadLog.slice(0,15);
-  const uploadRows = uploads.length ? uploads.map(u=>`
+  const uploadRows = uploads.length ? uploads.map(u=>{
+    const batchTxns = u.uploadId ? DATA.transactions.filter(t=>t.uploadId===u.uploadId) : [];
+    const canRemove = u.uploadId && batchTxns.length>0;
+    return `
     <tr>
       <td>${fmtDateTime(u.timestamp)}</td>
       <td>${esc(u.fileName)}</td>
@@ -927,10 +1035,12 @@ function renderAdminUploadBody(){
       <td class="num-cell">${u.duplicate}</td>
       <td class="num-cell">${u.rejected}</td>
       <td>${u.status}</td>
-    </tr>`).join('') : `<tr><td colspan="7" class="empty">No uploads yet.</td></tr>`;
+      <td>${canRemove ? `<button class="btn sm danger" data-removeupload="${u.uploadId}">Remove</button>` : `<span class="locked-note">—</span>`}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8" class="empty">No uploads yet.</td></tr>`;
 
   return `
-    <div class="warn-box">This is a self-contained prototype. It has no live Google Apps Script backend — the connection status below is not a real network check. It runs on Claude's built-in persistent storage, which is real (data survives reloads and is shared across anyone with this link), but it is not Google Sheets. See the accompanying Apps Script package for a real Sheets-backed version.</div>
+    <div class="note-box">Live and backed by your Google Sheet via the Apps Script Web App — every save here writes to the DataStore tab, and every load reads from it. This is not a local-only prototype.</div>
 
     <div class="grid" style="grid-template-columns:1fr 1fr;">
       <div class="card">
@@ -963,7 +1073,7 @@ function renderAdminUploadBody(){
     <div class="card">
       <div class="card-head"><h2>Upload Log</h2></div>
       <div class="card-body" style="overflow-x:auto;">
-        <table><thead><tr><th>Timestamp</th><th>File</th><th>Total</th><th>Imported</th><th>Duplicate</th><th>Rejected</th><th>Status</th></tr></thead>
+        <table><thead><tr><th>Timestamp</th><th>File</th><th>Total</th><th>Imported</th><th>Duplicate</th><th>Rejected</th><th>Status</th><th>Action</th></tr></thead>
         <tbody>${uploadRows}</tbody></table>
       </div>
     </div>
@@ -1006,7 +1116,7 @@ function bindDynamicHandlers(){
     el.onchange = ()=>{
       const t = DATA.transactions.find(x=>x.id===el.dataset.approve);
       t.storeApproval = el.checked;
-      persistQuiet();
+      persistQuiet(t);
       updateSubmitButtonState();
     };
   });
@@ -1026,15 +1136,14 @@ function bindDynamicHandlers(){
       const id = el.dataset.remark || el.dataset.respond;
       const t = DATA.transactions.find(x=>x.id===id);
       t.storeRemarks = el.value;
-      persistQuiet();
+      persistQuiet(t);
     });
   });
   // Reason for Return dropdown + its "Other" free-text follow-up.
   document.querySelectorAll('[data-reason]').forEach(el=>{
     el.onchange = ()=>{
       const t = DATA.transactions.find(x=>x.id===el.dataset.reason);
-      if(t) t.reason = el.value;
-      persistQuiet();
+      if(t){ t.reason = el.value; persistQuiet(t); }
       render(); // re-render so the "Other" textarea appears/disappears immediately
     };
   });
@@ -1047,8 +1156,7 @@ function bindDynamicHandlers(){
     el.addEventListener('blur', ()=>{
       editingActive=false;
       const t = DATA.transactions.find(x=>x.id===el.dataset.reasonremarks);
-      if(t) t.reasonRemarks = el.value;
-      persistQuiet();
+      if(t){ t.reasonRemarks = el.value; persistQuiet(t); }
     });
   });
   document.querySelectorAll('[data-clusterremark]').forEach(el=>{
@@ -1057,7 +1165,7 @@ function bindDynamicHandlers(){
       editingActive=false;
       const t = DATA.transactions.find(x=>x.id===el.dataset.clusterremark);
       t.clusterRemarks = el.value;
-      persistQuiet();
+      persistQuiet(t);
     });
   });
 
@@ -1134,77 +1242,50 @@ function bindDynamicHandlers(){
   const regionSel = document.getElementById('regionSelect');
   if(regionSel) regionSel.onchange = (e)=>{ ctx.region = e.target.value; render(); };
 
-  // Store login gate
-  const loginStoreSelect = document.getElementById('loginStoreSelect');
-  if(loginStoreSelect) loginStoreSelect.onchange = (e)=>{ storeAuth.storeCode = e.target.value; render(); };
-  const storeUnlockBtn = document.getElementById('storeUnlockBtn');
-  if(storeUnlockBtn) storeUnlockBtn.onclick = async ()=>{
-    const sel = document.getElementById('loginStoreSelect');
-    const pass = document.getElementById('loginStorePass').value;
-    storeUnlockBtn.disabled = true; storeUnlockBtn.textContent = 'Checking...';
-    const ok = await verifyLogin('store', sel.value, pass);
-    storeUnlockBtn.disabled = false; storeUnlockBtn.textContent = 'Unlock';
-    if(ok){
-      storeAuth.storeCode = sel.value;
-      storeAuth.unlocked = true;
-      render();
-    } else {
-      showToast('Incorrect store password.');
-    }
-  };
-  const storeLockBtn = document.getElementById('storeLockBtn');
-  if(storeLockBtn) storeLockBtn.onclick = ()=>{ storeAuth.unlocked = false; render(); };
+  // Store/cluster/regional switchers used ONLY by Admin browsing between
+  // views post-login — not login gates anymore, just view selectors.
   const adminStoreSwitch = document.getElementById('adminStoreSwitch');
   if(adminStoreSwitch) adminStoreSwitch.onchange = ()=>{ storeAuth.storeCode = adminStoreSwitch.value; render(); };
-
-  // Cluster login gate
-  const loginClusterSelect = document.getElementById('loginClusterSelect');
-  if(loginClusterSelect) loginClusterSelect.onchange = (e)=>{ clusterAuth.clusterManager = e.target.value; render(); };
-  const clusterUnlockBtn = document.getElementById('clusterUnlockBtn');
-  if(clusterUnlockBtn) clusterUnlockBtn.onclick = async ()=>{
-    const sel = document.getElementById('loginClusterSelect');
-    const pass = document.getElementById('loginClusterPass').value;
-    clusterUnlockBtn.disabled = true; clusterUnlockBtn.textContent = 'Checking...';
-    const ok = await verifyLogin('cluster', sel.value, pass);
-    clusterUnlockBtn.disabled = false; clusterUnlockBtn.textContent = 'Unlock';
-    if(ok){
-      clusterAuth.clusterManager = sel.value;
-      clusterAuth.unlocked = true;
-      render();
-    } else {
-      showToast('Incorrect cluster manager passcode.');
-    }
-  };
-  const clusterLockBtn = document.getElementById('clusterLockBtn');
-  if(clusterLockBtn) clusterLockBtn.onclick = ()=>{ clusterAuth.unlocked = false; render(); };
   const adminClusterSwitch = document.getElementById('adminClusterSwitch');
   if(adminClusterSwitch) adminClusterSwitch.onchange = ()=>{ clusterAuth.clusterManager = adminClusterSwitch.value; render(); };
 
-  // Regional login gate
-  const loginRegionalSelect = document.getElementById('loginRegionalSelect');
-  if(loginRegionalSelect) loginRegionalSelect.onchange = (e)=>{ regionalAuth.region = e.target.value; render(); };
-  const regionalUnlockBtn = document.getElementById('regionalUnlockBtn');
-  if(regionalUnlockBtn) regionalUnlockBtn.onclick = async ()=>{
-    const sel = document.getElementById('loginRegionalSelect');
-    const pass = document.getElementById('loginRegionalPass').value;
-    regionalUnlockBtn.disabled = true; regionalUnlockBtn.textContent = 'Checking...';
-    const ok = await verifyLogin('regional', sel.value, pass);
-    regionalUnlockBtn.disabled = false; regionalUnlockBtn.textContent = 'Unlock';
-    if(ok){
-      regionalAuth.region = sel.value;
-      regionalAuth.unlocked = true;
-      ctx.region = sel.value;
-      render();
-    } else {
-      showToast('Incorrect regional manager passcode.');
-    }
-  };
-  const regionalLockBtn = document.getElementById('regionalLockBtn');
-  if(regionalLockBtn) regionalLockBtn.onclick = ()=>{ regionalAuth.unlocked = false; render(); };
+  // Per-view "Lock" buttons and the header Log out button all do the same
+  // thing now: clear every auth state and drop back to the single
+  // password gate. (Under the old per-role login system these only
+  // needed to clear their own role; now that one password grants exactly
+  // one role, "lock" and "log out" are the same action everywhere.)
+  ['storeLockBtn','clusterLockBtn','regionalLockBtn','adminLockBtn','logoutBtn'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.onclick = logout;
+  });
 
-  // Admin entry (small link in header, not part of main tabs)
-  const adminEntryLink = document.getElementById('adminEntryLink');
-  if(adminEntryLink) adminEntryLink.onclick = ()=>{ screen='admin'; render(); };
+  // Single password gate
+  const gateUnlockBtn = document.getElementById('gateUnlockBtn');
+  const gatePassInput = document.getElementById('gatePass');
+  if(gateUnlockBtn){
+    gateUnlockBtn.onclick = async ()=>{
+      const pass = gatePassInput.value;
+      if(!pass){ showToast('Enter your access code.'); return; }
+      gateUnlockBtn.disabled = true; gateUnlockBtn.textContent = 'Checking...';
+      const match = await verifyPasswordLogin(pass);
+      gateUnlockBtn.disabled = false; gateUnlockBtn.textContent = 'Unlock';
+      if(!match){ showToast('Incorrect access code.'); return; }
+      if(match.role === 'admin'){
+        adminAuth.unlocked = true; screen = 'hq';
+      } else if(match.role === 'regional'){
+        regionalAuth.unlocked = true; regionalAuth.region = match.identifier; ctx.region = match.identifier; screen = 'hq';
+      } else if(match.role === 'cluster'){
+        clusterAuth.unlocked = true; clusterAuth.clusterManager = match.identifier; screen = 'cluster';
+      } else if(match.role === 'store'){
+        storeAuth.unlocked = true; storeAuth.storeCode = match.identifier; screen = 'store';
+      } else {
+        showToast('Unrecognized role from backend: '+match.role); return;
+      }
+      render();
+    };
+  }
+  if(gatePassInput) gatePassInput.onkeydown = (e)=>{ if(e.key==='Enter') gateUnlockBtn.click(); };
+
   const manualRefreshBtn = document.getElementById('manualRefreshBtn');
   if(manualRefreshBtn) manualRefreshBtn.onclick = async ()=>{
     manualRefreshBtn.disabled = true; manualRefreshBtn.textContent = 'Refreshing...';
@@ -1221,24 +1302,6 @@ function bindDynamicHandlers(){
     }
   };
 
-  const adminUnlockBtn = document.getElementById('adminUnlockBtn');
-  if(adminUnlockBtn) adminUnlockBtn.onclick = async ()=>{
-    const u = document.getElementById('loginAdminUser').value.trim();
-    const p = document.getElementById('loginAdminPass').value;
-    adminUnlockBtn.disabled = true; adminUnlockBtn.textContent = 'Checking...';
-    const ok = await verifyLogin('admin', u, p);
-    adminUnlockBtn.disabled = false; adminUnlockBtn.textContent = 'Unlock';
-    if(ok){
-      adminAuth.unlocked = true;
-      adminSubView = 'upload';
-      render();
-    }else{
-      showToast('Incorrect admin username or password.');
-    }
-  };
-  const adminLockBtn = document.getElementById('adminLockBtn');
-  if(adminLockBtn) adminLockBtn.onclick = ()=>{ adminAuth.unlocked=false; screen='hq'; render(); };
-
   const adminTabUpload = document.getElementById('adminTabUpload');
   if(adminTabUpload) adminTabUpload.onclick = ()=>{ adminSubView='upload'; render(); };
   const adminTabAudit = document.getElementById('adminTabAudit');
@@ -1250,7 +1313,7 @@ function bindDynamicHandlers(){
   if(uploadBtn) uploadBtn.onclick = handleUpload;
 }
 
-function persistQuiet(){ saveData(DATA); }
+async function persistQuiet(t){ await patchTransactions([t], []); }
 
 // Re-syncs the Submit button's disabled state / label directly in the DOM
 // (no render()) so it reacts instantly to checkbox changes without touching
@@ -1269,7 +1332,7 @@ function updateSubmitButtonState(){
 // Only transactions ticked "Is Approved by Manager" move forward — an
 // unapproved draft stays at the store for further action instead of being
 // silently pushed into Cluster Review.
-function submitStoreDrafts(storeCode){
+async function submitStoreDrafts(storeCode){
   const drafts = DATA.transactions.filter(t=>t.storeCode===storeCode && t.status==='Not Submitted' && t.storeApproval);
   if(!drafts.length){ showToast('No approved draft transactions to submit.'); return; }
   const missingReason = drafts.filter(t=>!t.reason || (t.reason==='Other' && !t.reasonRemarks.trim()));
@@ -1278,47 +1341,49 @@ function submitStoreDrafts(storeCode){
     return;
   }
   const today = new Date().toISOString();
+  const auditEntries = [];
   drafts.forEach(t=>{
     t.status='Awaiting Review';
     t.submittedDate = t.date;
     t.lastUpdated = today;
     t.lastUpdatedBy = 'Store Manager';
-    addAudit({user:'Store Manager', role:'Store', action:'Store Submitted', transaction:t.transactionNumber, prevStatus:'Not Submitted', newStatus:'Awaiting Review', remarks:t.storeRemarks});
+    auditEntries.push(addAudit({user:'Store Manager', role:'Store', action:'Store Submitted', transaction:t.transactionNumber, prevStatus:'Not Submitted', newStatus:'Awaiting Review', remarks:t.storeRemarks}));
   });
-  saveData(DATA);
+  await patchTransactions(drafts, auditEntries);
   showToast(`${drafts.length} approved transaction(s) submitted and locked for Cluster Review.`);
   render();
 }
 
-function resubmitTxn(id){
+async function resubmitTxn(id){
   const t = DATA.transactions.find(x=>x.id===id);
   if(!t || t.status!=='Re-Review') return;
   t.status='Awaiting Review';
   t.lastUpdated=new Date().toISOString();
   t.lastUpdatedBy='Store Manager';
-  addAudit({user:'Store Manager', role:'Store', action:'Store Resubmitted', transaction:t.transactionNumber, prevStatus:'Re-Review', newStatus:'Awaiting Review', remarks:t.storeRemarks});
-  saveData(DATA);
+  const auditEntry = addAudit({user:'Store Manager', role:'Store', action:'Store Resubmitted', transaction:t.transactionNumber, prevStatus:'Re-Review', newStatus:'Awaiting Review', remarks:t.storeRemarks});
+  await patchTransactions([t], [auditEntry]);
   showToast('Transaction resubmitted and locked again.');
   render();
 }
 
-function signOffTxn(id){
+async function signOffTxn(id){
   const t = DATA.transactions.find(x=>x.id===id);
   if(!t) return;
   const prev = t.status;
   t.reviewHistory = t.reviewHistory || [];
-  t.reviewHistory.push({ round: t.reviewHistory.length+1, decision:'Signed Off', remarks:t.clusterRemarks, by:clusterAuth.clusterManager, date:new Date().toISOString() });
+  const reviewEntry = { round: t.reviewHistory.length+1, decision:'Signed Off', remarks:t.clusterRemarks, by:clusterAuth.clusterManager, date:new Date().toISOString() };
+  t.reviewHistory.push(reviewEntry);
   t.status='Signed Off';
   t.reviewedDate = new Date().toISOString().slice(0,10);
   t.lastUpdated = new Date().toISOString();
   t.lastUpdatedBy = clusterAuth.clusterManager;
-  addAudit({user:clusterAuth.clusterManager, role:'Cluster Manager', action:'Cluster Manager Signed Off (round '+t.reviewHistory.length+')', transaction:t.transactionNumber, prevStatus:prev, newStatus:'Signed Off', remarks:t.clusterRemarks});
-  saveData(DATA);
+  const auditEntry = addAudit({user:clusterAuth.clusterManager, role:'Cluster Manager', action:'Cluster Manager Signed Off (round '+t.reviewHistory.length+')', transaction:t.transactionNumber, prevStatus:prev, newStatus:'Signed Off', remarks:t.clusterRemarks});
+  await saveReviewDecision(t, reviewEntry, auditEntry);
   showToast('Transaction signed off and closed.');
   render();
 }
 
-function sendReReview(id){
+async function sendReReview(id){
   const t = DATA.transactions.find(x=>x.id===id);
   if(!t) return;
   if(!t.clusterRemarks || !t.clusterRemarks.trim()){
@@ -1327,12 +1392,13 @@ function sendReReview(id){
   }
   const prev = t.status;
   t.reviewHistory = t.reviewHistory || [];
-  t.reviewHistory.push({ round: t.reviewHistory.length+1, decision:'Re-Review', remarks:t.clusterRemarks, by:clusterAuth.clusterManager, date:new Date().toISOString() });
+  const reviewEntry = { round: t.reviewHistory.length+1, decision:'Re-Review', remarks:t.clusterRemarks, by:clusterAuth.clusterManager, date:new Date().toISOString() };
+  t.reviewHistory.push(reviewEntry);
   t.status='Re-Review';
   t.lastUpdated = new Date().toISOString();
   t.lastUpdatedBy = clusterAuth.clusterManager;
-  addAudit({user:clusterAuth.clusterManager, role:'Cluster Manager', action:'Cluster Manager Sent for Re-Review (round '+t.reviewHistory.length+')', transaction:t.transactionNumber, prevStatus:prev, newStatus:'Re-Review', remarks:t.clusterRemarks});
-  saveData(DATA);
+  const auditEntry = addAudit({user:clusterAuth.clusterManager, role:'Cluster Manager', action:'Cluster Manager Sent for Re-Review (round '+t.reviewHistory.length+')', transaction:t.transactionNumber, prevStatus:prev, newStatus:'Re-Review', remarks:t.clusterRemarks});
+  await saveReviewDecision(t, reviewEntry, auditEntry);
   showToast('Sent back to store for re-review.');
   render();
 }
@@ -1400,29 +1466,61 @@ const COL = {
 
 function normText(v){ return String(v==null?'':v).trim().toLowerCase(); }
 function numOf(v){ const n = Number(v); return isNaN(n) ? 0 : n; }
+// Excel's date epoch is Dec 30, 1899 (this already accounts for the
+// well-known spreadsheet bug that treats 1900 as a leap year). Converting
+// via this arithmetic — instead of a library's Date-object conversion —
+// never touches a timezone-aware API, so it can't land on the wrong
+// calendar day depending on what timezone the browser is running in. This
+// is the fix for a real bug: the previous Date-object-based conversion
+// produced a 2-day-backward shift for transactions confirmed correct at
+// the source (verified directly against a real uploaded report).
+function excelSerialToUTCDate(serial){
+  const days = Math.floor(Number(serial));
+  if(!isFinite(days)) return null;
+  const utcMs = (days - 25569) * 86400000; // 25569 = days between 1899-12-30 and 1970-01-01
+  const d = new Date(utcMs);
+  return isNaN(d.getTime()) ? null : d;
+}
 function toDateOnly(v){
-  if(v instanceof Date && !isNaN(v.getTime())) return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  if(typeof v === 'number' && isFinite(v)){
+    const d = excelSerialToUTCDate(v);
+    return d ? new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())) : null;
+  }
+  if(v instanceof Date && !isNaN(v.getTime())){
+    // Fallback only — UTC getters, never local ones, since local getters
+    // combined with a later UTC-based serialization is exactly what
+    // caused the original bug.
+    return new Date(Date.UTC(v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate()));
+  }
   if(typeof v === 'string' && v.trim()){
     const d = new Date(v);
-    if(!isNaN(d.getTime())) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    if(!isNaN(d.getTime())) return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   }
   return null;
 }
-// Transaction Time (column AB) can arrive as a JS Date (Excel serial with
-// cellDates:true), a raw Excel time fraction (0–1 = fraction of a day), or
-// plain text like "14:35". All three are normalized to "HH:MM".
+// Transaction Time (column AB) can arrive as a raw Excel serial (integer
+// part = date, fractional part = time-of-day — only the fraction is used
+// here), a JS Date (fallback), or plain text like "14:35".
 function toTimeString(v){
-  if(v instanceof Date && !isNaN(v.getTime())){
-    return String(v.getHours()).padStart(2,'0')+':'+String(v.getMinutes()).padStart(2,'0');
-  }
-  if(typeof v === 'number' && v>=0 && v<1){
-    const totalMin = Math.round(v*24*60);
+  if(typeof v === 'number' && isFinite(v) && v>=0){
+    const frac = v - Math.floor(v);
+    if(frac<=0) return '';
+    const totalMin = Math.round(frac*24*60);
     return String(Math.floor(totalMin/60)).padStart(2,'0')+':'+String(totalMin%60).padStart(2,'0');
+  }
+  if(v instanceof Date && !isNaN(v.getTime())){
+    return String(v.getUTCHours()).padStart(2,'0')+':'+String(v.getUTCMinutes()).padStart(2,'0');
   }
   if(typeof v === 'string' && v.trim()) return v.trim();
   return '';
 }
-function isoDate(d){ return d ? d.toISOString().slice(0,10) : null; }
+function isoDate(d){
+  if(!d) return null;
+  // Built directly from UTC getters, never toISOString() on a value that
+  // might carry local-timezone construction — that mismatch was the other
+  // half of the original 2-day-shift bug.
+  return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');
+}
 
 // Find the header row by content (search near the documented row first,
 // then scan) rather than trusting the row number alone.
@@ -1442,9 +1540,21 @@ function handleUpload(){
   const file = input.files[0];
   if(!file){ showToast('Choose a file first.'); return; }
   const reader = new FileReader();
-  reader.onload = (e)=>{
+  const uploadBatchId = 'U'+Date.now(); // tags every transaction from this
+    // one upload so a bad/duplicate upload can be removed later without
+    // touching transactions from any other upload.
+  reader.onload = async (e)=>{
     try{
-      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      // cellDates is deliberately NOT used — letting SheetJS convert Excel
+      // date serials into JS Date objects turned out to be silently
+      // timezone-dependent (verified: the exact same cell produced a
+      // different underlying instant depending on the browser's local
+      // timezone), which combined with a later UTC round-trip to produce a
+      // real 2-day-backward date shift. Reading raw serial numbers instead
+      // and converting them with pure arithmetic (see excelSerialToUTCDate)
+      // sidesteps timezone handling entirely — it can't be timezone-wrong
+      // because it never touches a timezone-aware API.
+      const wb = XLSX.read(e.target.result, {type:'array'});
       const sheetName = wb.SheetNames.find(n=>!/attribut/i.test(n)) || wb.SheetNames[0];
       const sheet = wb.Sheets[sheetName];
       const aoa = XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', raw:true});
@@ -1593,6 +1703,7 @@ function handleUpload(){
           barcodes: g.barcodes,
           origTransaction: g.origTransaction,
           status: 'Not Submitted',
+          uploadId: uploadBatchId,
         }));
         imported++;
       });
@@ -1601,12 +1712,17 @@ function handleUpload(){
         timestamp:new Date().toISOString(), fileName:file.name,
         total: groups.size, imported, duplicate,
         rejected: unknownStore + notFlagged + missingReturnDate,
-        status: imported>0?'Processed':'No records imported'
+        status: imported>0?'Processed':'No records imported',
+        uploadId: uploadBatchId,
       };
       DATA.uploadLog.unshift(logEntry);
       DATA.lastUploadTs = logEntry.timestamp;
-      addAudit({user:'Admin', role:'Admin', action:`Admin Uploaded Return Report (${file.name})`, transaction:'—', prevStatus:'—', newStatus:'—', remarks:`${imported} imported, ${duplicate} duplicate, ${unknownStore} unknown store, ${notFlagged} not flagged (clean exchange), ${missingReturnDate} unparseable return date, ${skippedNoKey} rows with no Transaction key`});
-      saveData(DATA);
+      const auditEntry = addAudit({user:'Admin', role:'Admin', action:`Admin Uploaded Return Report (${file.name})`, transaction:'—', prevStatus:'—', newStatus:'—', remarks:`${imported} imported, ${duplicate} duplicate, ${unknownStore} unknown store, ${notFlagged} not flagged (clean exchange), ${missingReturnDate} unparseable return date, ${skippedNoKey} rows with no Transaction key`});
+      // Only THIS batch's brand-new rows go to the backend — every other
+      // transaction already on the sheet (submitted, under review, signed
+      // off by someone else right now) is left completely untouched.
+      const newTxns = DATA.transactions.filter(t=>t.uploadId===uploadBatchId);
+      await saveUpload(newTxns, logEntry, auditEntry);
 
       document.getElementById('uploadSummaryBox').innerHTML = `
         <div class="note-box" style="margin-top:12px;">
