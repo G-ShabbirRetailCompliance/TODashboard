@@ -174,6 +174,53 @@
   .review-btn:hover{ background:#0D5E57; }
   .review-btn:disabled{ opacity:.6; cursor:default; }
 
+  .entry-box{
+    background:var(--paper); border-radius:8px; padding:18px 20px; margin-bottom:20px;
+    box-shadow:0 1px 3px rgba(20,40,70,.06);
+  }
+  .entry-row{ display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap; }
+  .entry-field{ flex:1; min-width:200px; }
+  .entry-field .label{ font-size:10.5px; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:6px; font-weight:700; }
+  .entry-field select, .entry-field input{
+    width:100%; font-family:Arial, sans-serif; font-size:12.5px; padding:9px 10px;
+    border:1.3px solid var(--line); border-radius:5px; color:var(--ink);
+  }
+  .entry-status{ margin-top:10px; font-size:12px; color:var(--ink-mute); }
+  .entry-status.err{ color:var(--red); font-weight:700; }
+  .entry-status.ok{ color:var(--green); font-weight:700; }
+
+  .login-gate{
+    display:flex; align-items:center; justify-content:center; min-height:50vh;
+  }
+  .login-card{
+    background:var(--paper); border-radius:10px; padding:32px 36px; max-width:420px; width:100%;
+    box-shadow:0 2px 12px rgba(20,40,70,.1); text-align:center;
+  }
+  .login-eyebrow{ font-size:10.5px; letter-spacing:1.6px; text-transform:uppercase; color:var(--blue); font-weight:700; margin-bottom:8px; }
+  .login-card h2{ margin:0 0 12px; font-size:19px; color:var(--navy); }
+  .login-sub{ font-size:12.5px; color:var(--ink-soft); margin:0 0 20px; line-height:1.5; }
+  .login-card input{
+    width:100%; font-family:Arial, sans-serif; font-size:14px; padding:11px 12px; margin-bottom:12px;
+    border:1.3px solid var(--line); border-radius:6px; text-align:center; letter-spacing:1px;
+  }
+  .login-card button{ width:100%; padding:11px; font-size:13px; }
+  .login-card .entry-status{ margin-top:14px; }
+
+  .role-screen{ padding-top:4px; }
+  .role-screen-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
+  .role-screen-head h2{ margin:4px 0 0; font-size:20px; color:var(--navy); }
+  .status-pill{ font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:12px; white-space:nowrap; display:inline-block; }
+  .status-pill.awaiting{ background:var(--orange-tint); color:var(--orange); }
+  .status-pill.rereview{ background:var(--red-tint); color:var(--red); }
+  .status-pill.signedoff{ background:var(--teal-tint); color:var(--teal); }
+  .status-pill.notsubmitted{ background:#EEF1F5; color:var(--ink-mute); }
+  .action-btn-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  .action-btn-row button{ padding:5px 10px; font-size:10.5px; }
+  button.reassign-btn{ background:var(--red); }
+  button.reassign-btn:hover{ background:#8A2E2E; }
+  button.signoff-btn{ background:var(--teal); }
+  button.signoff-btn:hover{ background:#0D5E57; }
+
   ::-webkit-scrollbar{ width:8px; height:8px; }
   ::-webkit-scrollbar-thumb{ background:#c7d2e0; border-radius:4px; }
 
@@ -213,11 +260,22 @@
     <div class="live-row">
       <span class="live-label">Live data source</span>
       <input type="text" id="apiUrlInput" placeholder="Paste your Apps Script Web App URL (ends in /exec)">
-      <button class="ghost" onclick="connectLive()">Connect</button>
-      <button class="ghost" onclick="fetchLiveData(true)">Refresh</button>
-      <span class="live-status" id="liveStatus">Not connected — showing local upload mode.</span>
+      <button class="ghost" onclick="connectLive()">Save</button>
+      <span class="live-status" id="liveStatus"></span>
     </div>
   </div>
+
+  <div id="loginGate" class="login-gate">
+    <div class="login-card">
+      <div class="login-eyebrow">Access code required</div>
+      <p class="login-sub">Enter your access code. Stores, cluster managers, regional managers, and admin all use the same field — your code determines what you see.</p>
+      <input type="password" id="loginPasswordInput" placeholder="Access code" autocomplete="off">
+      <button onclick="attemptLogin()">Unlock</button>
+      <div class="entry-status" id="loginStatus"></div>
+    </div>
+  </div>
+
+  <div id="adminArea" style="display:none;">
 
   <div class="store-banner" id="storeBanner" style="display:none;"></div>
 
@@ -242,6 +300,8 @@
     <div class="tabs" id="tabsBar">
       <button class="tab-btn active" data-tab="dash" onclick="showTab('dash')">Dashboard</button>
       <button class="tab-btn" data-tab="summary" onclick="showTab('summary')">Cluster Manager Summary</button>
+      <span style="flex:1;"></span>
+      <button class="ghost" onclick="logout()" style="margin-left:auto;">Log out</button>
     </div>
 
     <div id="tabDash" class="tab-panel active">
@@ -322,7 +382,7 @@
             <th data-k="transfer">Transfer no</th><th data-k="store">Store</th><th data-k="region">Region</th>
             <th data-k="route">Route</th><th data-k="cm">Cluster manager</th><th data-k="qty">Pending qty</th>
             <th data-k="date">Created date</th><th data-k="age">Age (days)</th><th data-k="slab">Age slab</th>
-            <th>Remarks</th><th>Review</th>
+            <th>Remarks</th><th>Status</th>
           </tr></thead>
           <tbody id="pdTableBody"></tbody>
         </table>
@@ -345,7 +405,7 @@
             <th data-k="transfer">Transfer no</th><th data-k="store">Store</th><th data-k="region">Region</th>
             <th data-k="route">Route</th><th data-k="cm">Cluster manager</th><th data-k="qty">Pending qty</th>
             <th data-k="date">Ship date</th><th data-k="age">Age (days)</th><th data-k="slab">Age slab</th>
-            <th>Remarks</th><th>Review</th>
+            <th>Remarks</th><th>Status</th>
           </tr></thead>
           <tbody id="prTableBody"></tbody>
         </table>
@@ -369,10 +429,82 @@
       <div class="table-wrap">
         <table id="summaryTablePR"><thead><tr><th>Cluster manager</th><th>Store</th><th>Region</th><th>TO count</th><th>Pending qty</th></tr></thead><tbody></tbody></table>
       </div>
+
+      <div class="sec-head"><h2>Remarks tracking</h2><span class="n">Excludes 0-2 day TOs. Sorted least-reviewed first</span></div>
+      <div class="table-wrap">
+        <table id="trackingTable"><thead><tr>
+          <th>Cluster manager</th><th>Pending TOs (2+ days)</th><th>Signed Off</th><th>Awaiting Review</th><th>Re-Review</th><th>Not Submitted</th><th>% Signed Off</th>
+        </tr></thead><tbody id="trackingTableBody"></tbody></table>
+      </div>
     </div>
 
+    <div id="tabStoreEntry" class="tab-panel" style="display:none;"></div>
+    <div id="tabClusterEntry" class="tab-panel" style="display:none;"></div>
+    <div id="tabRegionEntry" class="tab-panel" style="display:none;"></div>
+
   </div>
+  </div><!-- /adminArea -->
+
+  <div id="storeScreen" class="role-screen" style="display:none;">
+    <div class="role-screen-head">
+      <div>
+        <div class="login-eyebrow" id="storeScreenLabel">Store view</div>
+        <h2 id="storeScreenTitle">—</h2>
+      </div>
+      <button class="ghost" onclick="logout()">Log out</button>
+    </div>
+    <div class="kpis" id="storeScreenKpis"></div>
+    <div class="table-wrap">
+      <table id="storeScreenTable"><thead><tr>
+        <th>Flow</th><th>Transfer no</th><th>Route</th><th>Pending qty</th><th>Driving date</th><th>Age (days)</th><th>Age slab</th><th>Status</th><th>Cluster manager note</th><th>Your remark</th>
+      </tr></thead><tbody id="storeScreenTableBody"></tbody></table>
+    </div>
+  </div>
+
+  <div id="clusterScreen" class="role-screen" style="display:none;">
+    <div class="role-screen-head">
+      <div>
+        <div class="login-eyebrow" id="clusterScreenLabel">Cluster manager view</div>
+        <h2 id="clusterScreenTitle">—</h2>
+      </div>
+      <button class="ghost" onclick="logout()">Log out</button>
+    </div>
+    <div class="kpis" id="clusterScreenKpis"></div>
+    <div class="table-wrap">
+      <table id="clusterScreenTable"><thead><tr>
+        <th>Flow</th><th>Transfer no</th><th>Store</th><th>Pending qty</th><th>Driving date</th><th>Age (days)</th><th>Age slab</th><th>Store remark</th><th>Status</th><th>Action</th>
+      </tr></thead><tbody id="clusterScreenTableBody"></tbody></table>
+    </div>
+  </div>
+
+  <div id="regionScreen" class="role-screen" style="display:none;">
+    <div class="role-screen-head">
+      <div>
+        <div class="login-eyebrow" id="regionScreenLabel">Regional insights — read-only</div>
+        <h2 id="regionScreenTitle">—</h2>
+      </div>
+      <button class="ghost" onclick="logout()">Log out</button>
+    </div>
+    <div class="kpis" id="regionScreenKpis"></div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Pending TOs by cluster manager</h3>
+        <div class="chart-wrap"><canvas id="regionScreenCmChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Age slab distribution</h3>
+        <div class="chart-wrap"><canvas id="regionScreenSlabChart"></canvas></div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="regionScreenTable"><thead><tr>
+        <th>Flow</th><th>Transfer no</th><th>Store</th><th>Cluster manager</th><th>Pending qty</th><th>Age (days)</th><th>Age slab</th><th>Store remark</th><th>Status</th><th>Action</th>
+      </tr></thead><tbody id="regionScreenTableBody"></tbody></table>
+    </div>
+  </div>
+
 </div>
+
 
 <script>
 if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
@@ -384,7 +516,7 @@ let SORT_PD = { key:'age', dir:'desc' };
 let SORT_PR = { key:'age', dir:'desc' };
 let charts = {};
 let remarksMap = {};
-let validationMap = {}; // transfer no -> { by, at } — cluster manager review status, from live data only
+let statusMap = {}; // transfer no -> { status, clusterRemarks, reviewedBy, reviewedAt } — from live data only
 
 function loadRemarks(){
   try{ remarksMap = JSON.parse(localStorage.getItem('to_dashboard_remarks') || '{}'); }
@@ -411,117 +543,70 @@ const HARDCODED_API_URL = 'https://script.google.com/macros/s/AKfycbzNF9rcpw7KQj
 let API_URL = HARDCODED_API_URL;
 try{ API_URL = localStorage.getItem('to_dashboard_api_url') || HARDCODED_API_URL; }catch(e){ API_URL = HARDCODED_API_URL; }
 
-// A URL like dashboard.html?code=P2MTAHB7 locks the whole page to one
-// store's own pending lines only. The code is an opaque, hard-to-guess
-// credential — the actual store it maps to is resolved server-side via the
-// StoreAccess sheet and never exposed back to the browser as a mapping list.
-// Admin controls (upload, publish, filters, charts, exports) are hidden.
-//
-// dashboard.html?admin=ADMIN_KEY reveals the upload/publish/live-data
-// controls. Anyone without that exact key sees a read-only dashboard —
-// this is the same shared-secret caveat as before: fine to stop casual
-// visitors from finding the publish button, not real security since the
-// key sits in this file's source.
-const ADMIN_KEY = 'sapphire-admin-2026';
-
-let LOCKED_ACCESS_CODE = '';
-let LOCKED_CLUSTER_CODE = '';
-let IS_ADMIN = false;
+// ---------------- Session / login ----------------
+// One password field decides both role and identity, resolved entirely
+// server-side (see Code.gs findLoginByPassword_). The client never sends a
+// role hint and never sees the Credentials sheet — only the resolved role,
+// identifier, and (for a dual-role regional manager like Ali Hyder) which
+// single cluster they can also act on.
+let SESSION = { password:'', role:'', identifier:'', actingCluster:'' };
 try{
-  const qs = new URLSearchParams(window.location.search);
-  LOCKED_ACCESS_CODE = (qs.get('code') || '').trim();
-  LOCKED_CLUSTER_CODE = (qs.get('cm') || '').trim();
-  IS_ADMIN = qs.get('admin') === ADMIN_KEY;
-}catch(e){ LOCKED_ACCESS_CODE = ''; LOCKED_CLUSTER_CODE = ''; IS_ADMIN = false; }
+  const saved = JSON.parse(localStorage.getItem('to_dashboard_session') || 'null');
+  if(saved && saved.password) SESSION = saved;
+}catch(e){ SESSION = { password:'', role:'', identifier:'', actingCluster:'' }; }
 
-function enterStoreMode(storeCode, storeName){
-  document.getElementById('livePanel').style.display = 'none';
-  document.getElementById('adminToolbar').style.display = 'none';
-  document.getElementById('tabsBar').style.display = 'none';
-  document.getElementById('adminOnlySection').style.display = 'none';
-  const banner = document.getElementById('storeBanner');
-  banner.style.display = 'block';
-  banner.innerHTML = 'Store view — ' + storeCode + (storeName ? ' — ' + storeName : '') +
-    '<div class="sub">Showing only this store\'s pending transfer orders. Add remarks against your own lines below.</div>';
+function saveSession(){
+  try{ localStorage.setItem('to_dashboard_session', JSON.stringify(SESSION)); }catch(e){}
 }
 
-function hideAdminControls(){
-  document.getElementById('livePanel').style.display = 'none';
-  document.getElementById('adminToolbar').style.display = 'none';
+function logout(){
+  SESSION = { password:'', role:'', identifier:'', actingCluster:'' };
+  try{ localStorage.removeItem('to_dashboard_session'); }catch(e){}
+  ['adminArea','storeScreen','clusterScreen','regionScreen'].forEach(id=>{
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('loginGate').style.display = 'flex';
+  document.getElementById('loginPasswordInput').value = '';
+  setLoginStatus('');
 }
 
-function getAccessCode(){
-  if(LOCKED_ACCESS_CODE) return LOCKED_ACCESS_CODE;
-  let code = '';
-  try{ code = localStorage.getItem('to_dashboard_access_code') || ''; }catch(e){}
-  if(!code){
-    code = (prompt('Enter your store access code to add remarks:') || '').trim();
-    try{ if(code) localStorage.setItem('to_dashboard_access_code', code); }catch(e){}
-  }
-  return code;
+function setLoginStatus(text, cls){
+  const el = document.getElementById('loginStatus');
+  el.textContent = text;
+  el.className = 'entry-status' + (cls ? ' '+cls : '');
 }
 
-function fetchStoreData(code){
-  if(!API_URL){
-    document.getElementById('errBox').textContent = 'This store link has no live data source configured yet — ask compliance to finish setting up the live dashboard.';
-    document.getElementById('errBox').classList.add('show');
-    return;
-  }
-  fetch(API_URL + '?action=getStoreData&code=' + encodeURIComponent(code))
+function attemptLogin(){
+  const password = document.getElementById('loginPasswordInput').value.trim();
+  if(!password){ setLoginStatus('Enter your access code.', 'err'); return; }
+  if(!API_URL){ setLoginStatus('No live data source configured — ask compliance to finish setup.', 'err'); return; }
+  setLoginStatus('Checking…');
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'login', password }) })
     .then(r => r.json())
     .then(data => {
-      if(data.error){
-        document.getElementById('errBox').textContent = 'That store link isn\'t valid — check the code with compliance.';
-        document.getElementById('errBox').classList.add('show');
-        return;
-      }
-      const rows = (data.rows||[]).map(fromApiRow);
-      ingestRows(rows);
-      const genDate = data.lastUpdated ? new Date(data.lastUpdated) : new Date();
-      enterStoreMode(data.storeCode, data.storeName);
-      activateDashboard(data.storeName || data.storeCode, 0, genDate);
+      if(!data.ok){ setLoginStatus('Invalid access code.', 'err'); return; }
+      SESSION = { password, role:data.role, identifier:data.identifier, actingCluster:data.actingCluster||'' };
+      saveSession();
+      routeAfterLogin();
     })
-    .catch(err => {
-      document.getElementById('errBox').textContent = 'Could not reach the live data source — try again shortly.';
-      document.getElementById('errBox').classList.add('show');
-      console.error('fetchStoreData error', err);
-    });
+    .catch(err => { setLoginStatus('Could not reach the live data source.', 'err'); console.error('attemptLogin error', err); });
 }
 
-function enterClusterMode(clusterManager){
-  document.getElementById('livePanel').style.display = 'none';
-  document.getElementById('adminToolbar').style.display = 'none';
-  const banner = document.getElementById('storeBanner');
-  banner.style.display = 'block';
-  banner.innerHTML = 'Cluster manager view — ' + clusterManager +
-    '<div class="sub">Showing this cluster\'s stores only. Use the review button on each remark to validate it.</div>';
-}
-
-function fetchClusterData(code){
-  if(!API_URL){
-    document.getElementById('errBox').textContent = 'This cluster link has no live data source configured yet — ask compliance to finish setting up the live dashboard.';
-    document.getElementById('errBox').classList.add('show');
-    return;
+function routeAfterLogin(){
+  document.getElementById('loginGate').style.display = 'none';
+  if(SESSION.role === 'admin'){
+    document.getElementById('adminArea').style.display = 'block';
+    fetchLiveData(false);
+  } else if(SESSION.role === 'store'){
+    document.getElementById('storeScreen').style.display = 'block';
+    loadStoreScreen();
+  } else if(SESSION.role === 'cluster'){
+    document.getElementById('clusterScreen').style.display = 'block';
+    loadClusterScreen();
+  } else if(SESSION.role === 'regional'){
+    document.getElementById('regionScreen').style.display = 'block';
+    loadRegionScreen();
   }
-  fetch(API_URL + '?action=getClusterData&code=' + encodeURIComponent(code))
-    .then(r => r.json())
-    .then(data => {
-      if(data.error){
-        document.getElementById('errBox').textContent = 'That cluster link isn\'t valid — check the code with compliance.';
-        document.getElementById('errBox').classList.add('show');
-        return;
-      }
-      const rows = (data.rows||[]).map(fromApiRow);
-      ingestRows(rows);
-      const genDate = data.lastUpdated ? new Date(data.lastUpdated) : new Date();
-      enterClusterMode(data.clusterManager);
-      activateDashboard(data.clusterManager, 0, genDate);
-    })
-    .catch(err => {
-      document.getElementById('errBox').textContent = 'Could not reach the live data source — try again shortly.';
-      document.getElementById('errBox').classList.add('show');
-      console.error('fetchClusterData error', err);
-    });
 }
 
 function setLiveStatus(text, cls){
@@ -536,7 +621,7 @@ function connectLive(){
   if(!val){ setLiveStatus('Enter a Web App URL first.', 'err'); return; }
   API_URL = val;
   try{ localStorage.setItem('to_dashboard_api_url', API_URL); }catch(e){}
-  fetchLiveData(true);
+  setLiveStatus('Saved.', 'ok');
 }
 
 function toApiRow(r){
@@ -560,7 +645,8 @@ function fromApiRow(o){
     region: o.Region, div: o.SubRegion, route: o.Route, cm: o.ClusterManager,
     qty: Number(o.PendingQty)||0, drivingDate: reviveDate(o.DrivingDate),
     age: (o.AgeDays==='' || o.AgeDays==null) ? null : Number(o.AgeDays), slab: o.AgeSlab,
-    _remark: o.Remark || '', _validatedBy: o.ValidatedBy || '', _validatedAt: o.ValidatedAt || ''
+    _remark: o.Remark || '', _status: o.Status || 'Not Submitted',
+    _clusterRemarks: o.ClusterRemarks || '', _reviewedBy: o.ReviewedBy || '', _reviewedAt: o.ReviewedAt || ''
   };
 }
 
@@ -569,13 +655,13 @@ function ingestRows(rows){
   RAW.pr = rows.filter(r=>r.flow==='Pending Receiving');
   rows.forEach(r=>{
     if(r._remark){ remarksMap[r.transfer] = r._remark; }
-    validationMap[r.transfer] = { by: r._validatedBy, at: r._validatedAt };
+    statusMap[r.transfer] = { status: r._status, clusterRemarks: r._clusterRemarks, reviewedBy: r._reviewedBy, reviewedAt: r._reviewedAt };
   });
   saveRemarks();
 }
 
 function fetchLiveData(userInitiated){
-  if(!API_URL){ setLiveStatus('Not connected — showing local upload mode.'); return; }
+  if(!API_URL){ setLiveStatus('Not connected.'); return; }
   document.getElementById('apiUrlInput').value = API_URL;
   setLiveStatus('Loading live data…');
   fetch(API_URL + '?action=getData')
@@ -600,7 +686,7 @@ function publishToLive(){
   if(!RAW.pd.length && !RAW.pr.length){ alert('Upload a workbook first — nothing to publish yet.'); return; }
   const rows = RAW.pd.concat(RAW.pr).map(toApiRow);
   setLiveStatus('Publishing…');
-  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'uploadData', rows }) })
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'uploadData', rows, password: SESSION.password }) })
     .then(r => r.json())
     .then(res => {
       if(res.success){ setLiveStatus('Published ' + res.count + ' lines live.', 'ok'); }
@@ -613,45 +699,254 @@ function submitRemarkToLive(el){
   if(!API_URL) return;
   const tn = el.dataset.tn;
   const value = el.value;
-  if(!value || !value.trim()) return; // don't prompt for a code just to clear a remark
-  const code = getAccessCode();
-  if(!code){
-    alert('An access code is required to save remarks — this remark was kept on your screen but not saved to the live sheet.');
-    return;
-  }
-  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'submitRemark', transferNo:tn, remark:value, accessCode: code }) })
+  if(!value || !value.trim()) return;
+  const password = el.dataset.code || SESSION.password;
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'submitRemark', transferNo:tn, remark:value, password }) })
     .then(r => r.json())
     .then(res => {
       if(!res.success){
         console.warn('Remark submit failed', res);
-        alert('Could not save that remark: ' + (res.message||'rejected by server') + '. This usually means the code is wrong, or this transfer order does not belong to your store.');
+        alert('Could not save that remark: ' + (res.message||'rejected by server'));
+      } else if(SESSION.role === 'store'){
+        loadStoreScreen();
       }
     })
     .catch(err => console.warn('Remark submit error', err));
 }
 
-function validateRemarkLive(tn, btn){
-  if(!API_URL || !LOCKED_CLUSTER_CODE) return;
-  btn.disabled = true;
-  btn.textContent = 'Reviewing…';
-  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'validateRemark', transferNo:tn, clusterCode: LOCKED_CLUSTER_CODE }) })
+function statusPillHtml(status){
+  const map = {
+    'Not Submitted': ['notsubmitted','Not Submitted'],
+    'Awaiting Review': ['awaiting','Awaiting Review'],
+    'Re-Review': ['rereview','Re-Review'],
+    'Signed Off': ['signedoff','Signed Off']
+  };
+  const [cls,label] = map[status] || ['notsubmitted', status||'Not Submitted'];
+  return '<span class="status-pill '+cls+'">'+label+'</span>';
+}
+
+// --- Store screen ---
+function loadStoreScreen(){
+  document.getElementById('storeScreenLabel').textContent = 'Store view';
+  document.getElementById('storeScreenTitle').textContent = 'Loading…';
+  fetch(API_URL + '?action=getStoreData&code=' + encodeURIComponent(SESSION.password))
+    .then(r => r.json())
+    .then(data => {
+      if(data.error){ document.getElementById('storeScreenTitle').textContent = 'Session invalid — please log out and back in.'; return; }
+      document.getElementById('storeScreenTitle').textContent = data.storeCode + ' — ' + (data.storeName||'');
+      const rows = (data.rows||[]).map(fromApiRow);
+      ingestRows(rows);
+      renderStoreScreen(rows);
+    })
+    .catch(err => { document.getElementById('storeScreenTitle').textContent = 'Could not reach the live data source.'; console.warn(err); });
+}
+
+function renderStoreScreen(rows){
+  const pd = rows.filter(r=>r.flow==='Pending Dispatch').length;
+  const pr = rows.filter(r=>r.flow==='Pending Receiving').length;
+  document.getElementById('storeScreenKpis').innerHTML =
+    '<div class="kpi"><div class="label">Pending dispatch</div><div class="value">'+pd+'</div></div>'+
+    '<div class="kpi c-orange"><div class="label">Pending receiving</div><div class="value">'+pr+'</div></div>';
+  const sorted = [...rows].sort((a,b)=>(b.age||0)-(a.age||0));
+  document.getElementById('storeScreenTableBody').innerHTML = sorted.map(r=>{
+    const tn = r.transfer||'';
+    const remVal = (remarksMap[tn]||'').replace(/"/g,'&quot;');
+    const st = statusMap[tn] || { status:'Not Submitted', clusterRemarks:'' };
+    return '<tr class="'+(r.age!=null && r.age>10?'crit':'')+'">'+
+      '<td>'+r.flow.replace('Pending ','')+'</td>'+
+      '<td>'+tn+'</td>'+
+      '<td>'+r.route+'</td>'+
+      '<td>'+(r.qty||0).toLocaleString()+'</td>'+
+      '<td>'+fmtDate(r.drivingDate)+'</td>'+
+      '<td>'+(r.age==null?'—':r.age)+'</td>'+
+      '<td>'+r.slab+'</td>'+
+      '<td>'+statusPillHtml(st.status)+'</td>'+
+      '<td>'+(st.clusterRemarks ? st.clusterRemarks.replace(/</g,'&lt;') : '<span style="color:var(--ink-mute);">—</span>')+'</td>'+
+      '<td><input type="text" class="remark-input" data-tn="'+tn+'" data-code="'+SESSION.password+'" value="'+remVal+'" placeholder="Add remark…" oninput="updateRemark(this)" onblur="submitRemarkToLive(this)"></td>'+
+      '</tr>';
+  }).join('') || '<tr><td colspan="10" style="color:var(--ink-mute);">No pending transfer orders for this store.</td></tr>';
+}
+
+// --- Cluster manager screen ---
+let clusterScreenRows = [];
+
+function loadClusterScreen(){
+  document.getElementById('clusterScreenLabel').textContent = SESSION.actingCluster ? 'Regional + cluster manager view' : 'Cluster manager view';
+  document.getElementById('clusterScreenTitle').textContent = 'Loading…';
+  fetch(API_URL + '?action=getClusterData&code=' + encodeURIComponent(SESSION.password))
+    .then(r => r.json())
+    .then(data => {
+      if(data.error){ document.getElementById('clusterScreenTitle').textContent = 'Session invalid — please log out and back in.'; return; }
+      document.getElementById('clusterScreenTitle').textContent = data.clusterManager;
+      const rows = (data.rows||[]).map(fromApiRow);
+      ingestRows(rows);
+      renderClusterScreen(rows);
+    })
+    .catch(err => { document.getElementById('clusterScreenTitle').textContent = 'Could not reach the live data source.'; console.warn(err); });
+}
+
+function renderClusterScreen(rows){
+  clusterScreenRows = rows;
+  const pd = rows.filter(r=>r.flow==='Pending Dispatch').length;
+  const pr = rows.filter(r=>r.flow==='Pending Receiving').length;
+  const withRemark = rows.filter(r=>remarksMap[r.transfer]).length;
+  const signedOff = rows.filter(r=>{ const s=statusMap[r.transfer]; return s && s.status==='Signed Off'; }).length;
+  document.getElementById('clusterScreenKpis').innerHTML =
+    '<div class="kpi"><div class="label">Pending dispatch</div><div class="value">'+pd+'</div></div>'+
+    '<div class="kpi c-orange"><div class="label">Pending receiving</div><div class="value">'+pr+'</div></div>'+
+    '<div class="kpi c-teal"><div class="label">Remarks added</div><div class="value">'+withRemark+'</div></div>'+
+    '<div class="kpi c-teal"><div class="label">Signed off</div><div class="value">'+signedOff+'</div></div>';
+  const sorted = [...rows].sort((a,b)=>(b.age||0)-(a.age||0));
+  document.getElementById('clusterScreenTableBody').innerHTML = sorted.map(r=>{
+    const tn = r.transfer||'';
+    const remVal = remarksMap[tn] || '';
+    const st = statusMap[tn] || { status:'Not Submitted' };
+    const actionCell = clusterActionCellHtml(tn, st.status, remVal);
+    return '<tr class="'+(r.age!=null && r.age>10?'crit':'')+'">'+
+      '<td>'+r.flow.replace('Pending ','')+'</td>'+
+      '<td>'+tn+'</td>'+
+      '<td>'+r.store+' — '+(r.storeName||'')+'</td>'+
+      '<td>'+(r.qty||0).toLocaleString()+'</td>'+
+      '<td>'+fmtDate(r.drivingDate)+'</td>'+
+      '<td>'+(r.age==null?'—':r.age)+'</td>'+
+      '<td>'+r.slab+'</td>'+
+      '<td>'+(remVal ? remVal.replace(/</g,'&lt;') : '<span style="color:var(--ink-mute);">—</span>')+'</td>'+
+      '<td>'+statusPillHtml(st.status)+'</td>'+
+      '<td>'+actionCell+'</td>'+
+      '</tr>';
+  }).join('') || '<tr><td colspan="10" style="color:var(--ink-mute);">No pending transfer orders for this cluster.</td></tr>';
+}
+
+function clusterActionCellHtml(tn, status, remVal){
+  if(status === 'Signed Off') return '<span style="color:var(--ink-mute);">Closed</span>';
+  if(!remVal) return '<span style="color:var(--ink-mute);">Awaiting store</span>';
+  return '<div class="action-btn-row">'+
+    '<button class="signoff-btn" onclick="signOffAction(\''+tn+'\')">Sign Off</button>'+
+    '<button class="reassign-btn" onclick="reassignAction(\''+tn+'\')">Reassign</button>'+
+    '</div>';
+}
+
+function signOffAction(tn){
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'signOff', transferNo:tn, password: SESSION.password }) })
     .then(r => r.json())
     .then(res => {
-      if(res.success){
-        validationMap[tn] = { by: 'pending-refresh', at: new Date().toISOString() };
-        applyFilters(); // re-render with the now-reviewed status shown
-      } else {
-        btn.disabled = false;
-        btn.textContent = 'Review';
-        alert('Could not mark this reviewed: ' + (res.message||'rejected by server'));
-      }
+      if(!res.success){ alert('Could not sign off: ' + (res.message||'rejected by server')); return; }
+      if(SESSION.role==='cluster' || SESSION.actingCluster) loadClusterScreenOrRegion_();
     })
-    .catch(err => {
-      btn.disabled = false;
-      btn.textContent = 'Review';
-      console.warn('validateRemarkLive error', err);
-    });
+    .catch(err => { alert('Sign off failed — network error.'); console.warn(err); });
 }
+
+function reassignAction(tn){
+  const reason = (prompt('Reason for sending this back to the store:') || '').trim();
+  if(!reason) return; // matches backend: a reason is required, so don't fire an empty request
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'reassign', transferNo:tn, clusterRemarks:reason, password: SESSION.password }) })
+    .then(r => r.json())
+    .then(res => {
+      if(!res.success){ alert('Could not reassign: ' + (res.message||'rejected by server')); return; }
+      loadClusterScreenOrRegion_();
+    })
+    .catch(err => { alert('Reassign failed — network error.'); console.warn(err); });
+}
+
+function loadClusterScreenOrRegion_(){
+  if(SESSION.role === 'cluster') loadClusterScreen();
+  else if(SESSION.role === 'regional') loadRegionScreen();
+}
+
+// --- Regional insights screen (read-only, except actingCluster rows) ---
+function loadRegionScreen(){
+  document.getElementById('regionScreenTitle').textContent = 'Loading…';
+  fetch(API_URL + '?action=getRegionData&code=' + encodeURIComponent(SESSION.password))
+    .then(r => r.json())
+    .then(data => {
+      if(data.error){ document.getElementById('regionScreenTitle').textContent = 'Session invalid — please log out and back in.'; return; }
+      document.getElementById('regionScreenTitle').textContent = data.region;
+      const rows = (data.rows||[]).map(fromApiRow);
+      ingestRows(rows);
+      renderRegionScreen(rows);
+    })
+    .catch(err => { document.getElementById('regionScreenTitle').textContent = 'Could not reach the live data source.'; console.warn(err); });
+}
+
+function renderRegionScreen(rows){
+  const pd = rows.filter(r=>r.flow==='Pending Dispatch').length;
+  const pr = rows.filter(r=>r.flow==='Pending Receiving').length;
+  document.getElementById('regionScreenKpis').innerHTML =
+    '<div class="kpi"><div class="label">Pending dispatch</div><div class="value">'+pd+'</div></div>'+
+    '<div class="kpi c-orange"><div class="label">Pending receiving</div><div class="value">'+pr+'</div></div>';
+
+  const cmCounts = {};
+  rows.forEach(r=>{ cmCounts[r.cm] = (cmCounts[r.cm]||0)+1; });
+  const cmEntries = Object.entries(cmCounts).sort((a,b)=>b[1]-a[1]);
+  if(charts.regionScreenCm) charts.regionScreenCm.destroy();
+  charts.regionScreenCm = new Chart(document.getElementById('regionScreenCmChart'), {
+    type:'bar',
+    data:{ labels:cmEntries.map(e=>e[0]), datasets:[{ data:cmEntries.map(e=>e[1]), backgroundColor:'#2E5FA3', borderRadius:4 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, datalabels:dlDark},
+      scales:{ x:{beginAtZero:true, grid:{color:'#EEF2F7'}}, y:{grid:{display:false}} } }
+  });
+
+  const order = ['0-2 Days','3-5 Days','6-10 Days','10+ Days'];
+  const slabCounts = order.map(s=>rows.filter(r=>r.slab===s).length);
+  if(charts.regionScreenSlab) charts.regionScreenSlab.destroy();
+  charts.regionScreenSlab = new Chart(document.getElementById('regionScreenSlabChart'), {
+    type:'bar',
+    data:{ labels:order, datasets:[{ data:slabCounts, backgroundColor:['#2FA84F','#F2A93C','#EB6834','#E34948'], borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, datalabels:{color:'#16202B',anchor:'end',align:'top',font:{size:10,weight:'bold'}}},
+      scales:{ x:{grid:{display:false}}, y:{beginAtZero:true, grid:{color:'#EEF2F7'}} } }
+  });
+
+  const sorted = [...rows].sort((a,b)=>(b.age||0)-(a.age||0));
+  document.getElementById('regionScreenTableBody').innerHTML = sorted.map(r=>{
+    const tn = r.transfer||'';
+    const remVal = remarksMap[tn] || '';
+    const st = statusMap[tn] || { status:'Not Submitted' };
+    const canAct = SESSION.actingCluster && r.cm && r.cm.trim().toUpperCase()===SESSION.actingCluster.toUpperCase();
+    const actionCell = canAct ? clusterActionCellHtml(tn, st.status, remVal) : '<span style="color:var(--ink-mute);">Read-only</span>';
+    return '<tr class="'+(r.age!=null && r.age>10?'crit':'')+'">'+
+      '<td>'+r.flow.replace('Pending ','')+'</td>'+
+      '<td>'+tn+'</td>'+
+      '<td>'+r.store+' — '+(r.storeName||'')+'</td>'+
+      '<td>'+r.cm+'</td>'+
+      '<td>'+(r.qty||0).toLocaleString()+'</td>'+
+      '<td>'+(r.age==null?'—':r.age)+'</td>'+
+      '<td>'+r.slab+'</td>'+
+      '<td>'+(remVal ? remVal.replace(/</g,'&lt;') : '<span style="color:var(--ink-mute);">—</span>')+'</td>'+
+      '<td>'+statusPillHtml(st.status)+'</td>'+
+      '<td>'+actionCell+'</td>'+
+      '</tr>';
+  }).join('') || '<tr><td colspan="10" style="color:var(--ink-mute);">No pending transfer orders for this region.</td></tr>';
+}
+
+// --- Remarks tracking (admin's Cluster Manager Summary tab) ---
+// Four buckets matching the reference sign-off tracker exactly: a TO with no
+// remark is Not Submitted; a remark with no status yet is Awaiting Review;
+// Re-Review and Signed Off come straight from the Status field.
+function renderTrackingTable(){
+  const el = document.getElementById('trackingTableBody');
+  if(!el) return;
+  const all = RAW.pd.concat(RAW.pr).filter(r=>r.slab!=='0-2 Days');
+  const byCm = {};
+  all.forEach(r=>{
+    if(!byCm[r.cm]) byCm[r.cm] = { total:0, signedOff:0, awaiting:0, reReview:0, notSubmitted:0 };
+    byCm[r.cm].total++;
+    const st = (statusMap[r.transfer] && statusMap[r.transfer].status) || 'Not Submitted';
+    if(st==='Signed Off') byCm[r.cm].signedOff++;
+    else if(st==='Re-Review') byCm[r.cm].reReview++;
+    else if(st==='Awaiting Review') byCm[r.cm].awaiting++;
+    else byCm[r.cm].notSubmitted++;
+  });
+  const entries = Object.entries(byCm).sort((a,b)=>{
+    const pctA = a[1].total ? a[1].signedOff/a[1].total : 0;
+    const pctB = b[1].total ? b[1].signedOff/b[1].total : 0;
+    return pctA - pctB;
+  });
+  el.innerHTML = entries.map(([cm,d])=>{
+    const pct = d.total ? Math.round(100*d.signedOff/d.total) : 0;
+    return '<tr><td>'+cm+'</td><td>'+d.total+'</td><td>'+d.signedOff+'</td><td>'+d.awaiting+'</td><td>'+d.reReview+'</td><td>'+d.notSubmitted+'</td><td>'+pct+'%</td></tr>';
+  }).join('') || '<tr><td colspan="7" style="color:var(--ink-mute);">No data.</td></tr>';
+}
+
 
 // Minimal CSV line parser handling quoted fields with embedded commas/quotes.
 function parseCSV(text){
@@ -969,31 +1264,18 @@ function loadFromEmbedded(payload){
   if(badge) badge.textContent = (RAW.pd.length+RAW.pr.length) + ' pending lines — static snapshot, generated ' + genDate.toDateString();
 }
 
-(function initFromEmbedded(){
-  if(!LOCKED_ACCESS_CODE && !LOCKED_CLUSTER_CODE && !IS_ADMIN) hideAdminControls();
-
+(function initSession(){
   const urlInput = document.getElementById('apiUrlInput');
   if(urlInput && API_URL) urlInput.value = API_URL;
 
-  if(LOCKED_ACCESS_CODE){
-    // A store link only ever makes sense against live data — there's no
-    // local upload path in store mode, so don't fall through to a snapshot.
-    fetchStoreData(LOCKED_ACCESS_CODE);
-    return;
+  if(SESSION.password && SESSION.role){
+    // A saved session means "stay logged in" across a refresh — the login
+    // gate still exists and still gated the FIRST visit, this just avoids
+    // making someone retype their code every single time they open the tab.
+    routeAfterLogin();
   }
-  if(LOCKED_CLUSTER_CODE){
-    fetchClusterData(LOCKED_CLUSTER_CODE);
-    return;
-  }
-
-  const el = document.getElementById('embeddedData');
-  const raw = el ? el.textContent.trim() : '';
-  if(raw && raw !== 'null'){
-    try{ loadFromEmbedded(JSON.parse(raw)); return; }
-    catch(e){ console.error('Failed to load embedded snapshot data', e); }
-  }
-  // No baked-in snapshot data — fall back to live data if a source is configured.
-  if(API_URL) fetchLiveData(false);
+  // No saved session: loginGate is already visible by default (see its CSS),
+  // nothing else to show until attemptLogin() succeeds.
 })();
 
 function buildSlicers(){
@@ -1050,9 +1332,8 @@ function showTab(tab){
 }
 
 function passesFilters(r){
-  // Store mode's data is already filtered server-side by fetchStoreData — no
-  // client-side store check needed here (LOCKED_ACCESS_CODE is an opaque
-  // credential, not something comparable to r.store).
+  // Store/cluster/region screens fetch already-scoped data server-side, so
+  // this only ever applies within the admin dashboard's own filter chips.
   if(FILTERS.regions.size && !FILTERS.regions.has(r.region)) return false;
   if(FILTERS.cms.size && !FILTERS.cms.has(r.cm)) return false;
   if(FILTERS.slabs.size && !FILTERS.slabs.has(r.slab)) return false;
@@ -1082,6 +1363,7 @@ function applyFilters(){
   renderTable('pd', pd.filter(r=>r.slab!=='0-2 Days'));
   renderTable('pr', pr.filter(r=>r.slab!=='0-2 Days'));
   renderSummaryTables(RAW.pd.filter(r=>r.slab!=='0-2 Days'), RAW.pr.filter(r=>r.slab!=='0-2 Days'));
+  renderTrackingTable();
 }
 
 function sum(arr, f){ return arr.reduce((s,r)=>s+(f(r)||0),0); }
@@ -1247,18 +1529,9 @@ function renderTable(flow, rows){
   document.getElementById(bodyId).innerHTML = sorted.slice(0,500).map(r=>{
     const tn = r.transfer||'';
     const remVal = (remarksMap[tn]||'').replace(/"/g,'&quot;');
-    const remarkCell = LOCKED_CLUSTER_CODE
-      ? '<td>'+(remVal ? remVal.replace(/&quot;/g,'"') : '<span style="color:var(--ink-mute);">—</span>')+'</td>'
-      : '<td><input type="text" class="remark-input" data-tn="'+tn+'" value="'+remVal+'" placeholder="Add remark…" oninput="updateRemark(this)" onblur="submitRemarkToLive(this)"></td>';
-    const val = validationMap[tn];
-    let reviewCell;
-    if(LOCKED_CLUSTER_CODE){
-      reviewCell = (val && val.by)
-        ? '<td><span class="review-badge ok">&#10003; Reviewed</span></td>'
-        : (remVal ? '<td><button class="review-btn" onclick="validateRemarkLive(\''+tn+'\', this)">Review</button></td>' : '<td><span style="color:var(--ink-mute);">No remark yet</span></td>');
-    } else {
-      reviewCell = (val && val.by) ? '<td><span class="review-badge ok">&#10003; Reviewed</span></td>' : '<td><span style="color:var(--ink-mute);">—</span></td>';
-    }
+    const remarkCell = '<td><input type="text" class="remark-input" data-tn="'+tn+'" value="'+remVal+'" placeholder="Add remark…" oninput="updateRemark(this)" onblur="submitRemarkToLive(this)"></td>';
+    const st = statusMap[tn] || { status:'Not Submitted' };
+    const reviewCell = '<td>'+statusPillHtml(st.status)+'</td>';
     return '<tr class="'+(r.age!=null && r.age>10 ? 'crit' : '')+'">'+
     '<td>'+tn+'</td>'+
     '<td>'+r.store+' — '+(r.storeName||'')+'</td>'+
