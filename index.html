@@ -214,6 +214,23 @@
   .status-pill.rereview{ background:var(--red-tint); color:var(--red); }
   .status-pill.signedoff{ background:var(--teal-tint); color:var(--teal); }
   .status-pill.notsubmitted{ background:#EEF1F5; color:var(--ink-mute); }
+  .status-pill.reopened{ background:#EFEAFB; color:var(--violet); }
+  .history-link{ font-size:10px; color:var(--blue); text-decoration:none; white-space:nowrap; }
+  .history-link:hover{ text-decoration:underline; }
+
+  .history-modal{
+    position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(10,20,35,.5);
+    align-items:center; justify-content:center; z-index:1000;
+  }
+  .history-modal-inner{
+    background:var(--paper); border-radius:10px; padding:22px 24px; max-width:640px; width:92%;
+    max-height:80vh; overflow-y:auto; box-shadow:0 4px 24px rgba(0,0,0,.2);
+  }
+  .history-modal-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .history-modal-head h3{ margin:0; font-size:15px; color:var(--navy); }
+  #historyModalBody table{ width:100%; border-collapse:collapse; font-size:11.5px; }
+  #historyModalBody th{ text-align:left; padding:6px 8px; background:var(--bg); font-size:10px; text-transform:uppercase; letter-spacing:.4px; color:var(--ink-soft); }
+  #historyModalBody td{ padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
   .action-btn-row{ display:flex; gap:6px; flex-wrap:wrap; }
   .action-btn-row button{ padding:5px 10px; font-size:10.5px; }
   button.reassign-btn{ background:var(--red); }
@@ -256,7 +273,7 @@
     </div>
   </div>
 
-  <div class="live-panel" id="livePanel">
+  <div class="live-panel" id="livePanel" style="display:none;">
     <div class="live-row">
       <span class="live-label">Live data source</span>
       <input type="text" id="apiUrlInput" placeholder="Paste your Apps Script Web App URL (ends in /exec)">
@@ -436,6 +453,18 @@
           <th>Cluster manager</th><th>Pending TOs (2+ days)</th><th>Signed Off</th><th>Awaiting Review</th><th>Re-Review</th><th>Not Submitted</th><th>% Signed Off</th>
         </tr></thead><tbody id="trackingTableBody"></tbody></table>
       </div>
+
+      <div class="sec-head"><h2>Reason breakdown — all stores</h2><span class="n">Why transfer orders are pending, by reason selected</span></div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>Pending dispatch — reasons</h3>
+          <table id="adminReasonPD"><thead><tr><th>Reason</th><th>No. of transfer orders</th></tr></thead><tbody id="adminReasonPDBody"></tbody></table>
+        </div>
+        <div class="chart-card">
+          <h3>Pending receiving — reasons</h3>
+          <table id="adminReasonPR"><thead><tr><th>Reason</th><th>No. of transfer orders</th></tr></thead><tbody id="adminReasonPRBody"></tbody></table>
+        </div>
+      </div>
     </div>
 
     <div id="tabStoreEntry" class="tab-panel" style="display:none;"></div>
@@ -456,7 +485,7 @@
     <div class="kpis" id="storeScreenKpis"></div>
     <div class="table-wrap">
       <table id="storeScreenTable"><thead><tr>
-        <th>Flow</th><th>Transfer no</th><th>Route</th><th>Pending qty</th><th>Driving date</th><th>Age (days)</th><th>Age slab</th><th>Status</th><th>Cluster manager note</th><th>Your remark</th>
+        <th>Flow</th><th>Transfer no</th><th>Route</th><th>Pending qty</th><th>Driving date</th><th>Age (days)</th><th>Age slab</th><th>Status</th><th>Cluster manager note</th><th>Reason</th><th></th>
       </tr></thead><tbody id="storeScreenTableBody"></tbody></table>
     </div>
   </div>
@@ -470,6 +499,16 @@
       <button class="ghost" onclick="logout()">Log out</button>
     </div>
     <div class="kpis" id="clusterScreenKpis"></div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Pending dispatch — reasons</h3>
+        <table id="clusterReasonPD"><thead><tr><th>Reason</th><th>No. of transfer orders</th></tr></thead><tbody id="clusterReasonPDBody"></tbody></table>
+      </div>
+      <div class="chart-card">
+        <h3>Pending receiving — reasons</h3>
+        <table id="clusterReasonPR"><thead><tr><th>Reason</th><th>No. of transfer orders</th></tr></thead><tbody id="clusterReasonPRBody"></tbody></table>
+      </div>
+    </div>
     <div class="table-wrap">
       <table id="clusterScreenTable"><thead><tr>
         <th>Flow</th><th>Transfer no</th><th>Store</th><th>Pending qty</th><th>Driving date</th><th>Age (days)</th><th>Age slab</th><th>Store remark</th><th>Status</th><th>Action</th>
@@ -495,6 +534,14 @@
         <h3>Age slab distribution</h3>
         <div class="chart-wrap"><canvas id="regionScreenSlabChart"></canvas></div>
       </div>
+      <div class="chart-card">
+        <h3>Pending dispatch — reasons</h3>
+        <table id="regionReasonPD"><thead><tr><th>Reason</th><th>No. of transfer orders</th></tr></thead><tbody id="regionReasonPDBody"></tbody></table>
+      </div>
+      <div class="chart-card">
+        <h3>Pending receiving — reasons</h3>
+        <table id="regionReasonPR"><thead><tr><th>Reason</th><th>No. of transfer orders</th></tr></thead><tbody id="regionReasonPRBody"></tbody></table>
+      </div>
     </div>
     <div class="table-wrap">
       <table id="regionScreenTable"><thead><tr>
@@ -505,10 +552,100 @@
 
 </div>
 
+<div id="historyModal" class="history-modal" style="display:none;">
+  <div class="history-modal-inner">
+    <div class="history-modal-head">
+      <h3 id="historyModalTitle">History</h3>
+      <button class="ghost" onclick="closeHistoryModal()">Close</button>
+    </div>
+    <div id="historyModalBody"></div>
+  </div>
+</div>
 
 <script>
 if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
 Chart.defaults.font.family = 'Arial';
+
+// Predefined reasons a store picks from instead of typing free text every
+// time — "Others" always reveals a text box for anything not covered.
+const DISPATCH_REASONS = [
+  'CN created, waiting for TRAX pickup',
+  'Waiting for company vehicle',
+  'Will be dispatched today',
+  'Stock not available — cancellation requested/initiated',
+  'Packing in process'
+];
+const RECEIVING_REASONS = [
+  'Stock physically not received at store',
+  'Pending due to variation',
+  'Systematically received',
+  'Will be received today',
+  'Physically received, scanning in process'
+];
+function reasonsForFlow(flow){ return flow==='Pending Dispatch' ? DISPATCH_REASONS : RECEIVING_REASONS; }
+
+function toggleOtherInput(tn){
+  const sel = document.getElementById('reasonSelect_'+tn);
+  const otherWrap = document.getElementById('otherWrap_'+tn);
+  if(otherWrap) otherWrap.style.display = (sel && sel.value === 'Others') ? 'block' : 'none';
+}
+
+function submitStoreReason(tn){
+  const sel = document.getElementById('reasonSelect_'+tn);
+  if(!sel || !sel.value){ alert('Select a reason first.'); return; }
+  let value = sel.value;
+  if(value === 'Others'){
+    const otherInput = document.getElementById('otherInput_'+tn);
+    const otherVal = (otherInput.value||'').trim();
+    if(!otherVal){ alert('Please write a remark for "Others".'); return; }
+    value = otherVal;
+  }
+  const btn = document.getElementById('submitBtn_'+tn);
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'submitRemark', transferNo:tn, remark:value, password: SESSION.password }) })
+    .then(r=>r.json())
+    .then(res=>{
+      if(!res.success){
+        alert('Could not save: ' + (res.message||'rejected by server'));
+        if(btn){ btn.disabled=false; btn.textContent='Submit'; }
+        return;
+      }
+      loadStoreScreen();
+    })
+    .catch(err=>{
+      alert('Save failed — network error.');
+      if(btn){ btn.disabled=false; btn.textContent='Submit'; }
+      console.warn(err);
+    });
+}
+
+// Counts pending lines against each predefined reason. A remark that
+// doesn't exactly match one of the predefined options is either "Others"
+// (non-empty custom text) or "No reason selected yet" (empty).
+function buildReasonCounts(rows, reasons){
+  const counts = {};
+  reasons.forEach(r=>{ counts[r]=0; });
+  counts['Others (custom remark)'] = 0;
+  counts['No reason selected yet'] = 0;
+  rows.forEach(r=>{
+    const remark = remarksMap[r.transfer] || '';
+    if(!remark){ counts['No reason selected yet']++; return; }
+    if(reasons.indexOf(remark)>-1) counts[remark]++;
+    else counts['Others (custom remark)']++;
+  });
+  return Object.entries(counts).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]);
+}
+
+function renderReasonTables(pdRows, prRows, pdBodyId, prBodyId){
+  const fill = (bodyId, counts) => {
+    const el = document.getElementById(bodyId);
+    if(!el) return;
+    el.innerHTML = counts.map(([reason,count])=>'<tr><td>'+reason+'</td><td>'+count+'</td></tr>').join('') ||
+      '<tr><td colspan="2" style="color:var(--ink-mute);">No data.</td></tr>';
+  };
+  fill(pdBodyId, buildReasonCounts(pdRows, DISPATCH_REASONS));
+  fill(prBodyId, buildReasonCounts(prRows, RECEIVING_REASONS));
+}
 
 let RAW = { pd: [], pr: [] };
 let FILTERS = { regions:new Set(), cms:new Set(), slabs:new Set() };
@@ -565,6 +702,7 @@ function logout(){
   ['adminArea','storeScreen','clusterScreen','regionScreen'].forEach(id=>{
     document.getElementById(id).style.display = 'none';
   });
+  document.getElementById('livePanel').style.display = 'none';
   document.getElementById('loginGate').style.display = 'flex';
   document.getElementById('loginPasswordInput').value = '';
   setLoginStatus('');
@@ -596,6 +734,7 @@ function routeAfterLogin(){
   document.getElementById('loginGate').style.display = 'none';
   if(SESSION.role === 'admin'){
     document.getElementById('adminArea').style.display = 'block';
+    document.getElementById('livePanel').style.display = 'block';
     fetchLiveData(false);
   } else if(SESSION.role === 'store'){
     document.getElementById('storeScreen').style.display = 'block';
@@ -719,10 +858,42 @@ function statusPillHtml(status){
     'Not Submitted': ['notsubmitted','Not Submitted'],
     'Awaiting Review': ['awaiting','Awaiting Review'],
     'Re-Review': ['rereview','Re-Review'],
-    'Signed Off': ['signedoff','Signed Off']
+    'Signed Off': ['signedoff','Signed Off'],
+    'Reopened': ['reopened','Reopened']
   };
   const [cls,label] = map[status] || ['notsubmitted', status||'Not Submitted'];
   return '<span class="status-pill '+cls+'">'+label+'</span>';
+}
+
+function historyLinkHtml(tn){
+  return '<a href="#" class="history-link" onclick="viewHistory(\''+tn+'\'); return false;">History</a>';
+}
+
+function viewHistory(tn){
+  document.getElementById('historyModalTitle').textContent = 'History — ' + tn;
+  document.getElementById('historyModalBody').innerHTML = '<p style="color:var(--ink-mute);">Loading…</p>';
+  document.getElementById('historyModal').style.display = 'flex';
+  fetch(API_URL + '?action=getHistory&tn=' + encodeURIComponent(tn))
+    .then(r => r.json())
+    .then(data => {
+      const rows = data.history || [];
+      if(!rows.length){
+        document.getElementById('historyModalBody').innerHTML = '<p style="color:var(--ink-mute);">No status changes recorded yet.</p>';
+        return;
+      }
+      document.getElementById('historyModalBody').innerHTML =
+        '<table><thead><tr><th>When</th><th>From</th><th>To</th><th>By</th><th>Note</th></tr></thead><tbody>' +
+        rows.map(h=>'<tr><td>'+new Date(h.timestamp).toLocaleString()+'</td><td>'+statusPillHtml(h.oldStatus)+'</td><td>'+statusPillHtml(h.newStatus)+'</td><td>'+(h.changedBy||'')+'</td><td>'+(h.note||'')+'</td></tr>').join('') +
+        '</tbody></table>';
+    })
+    .catch(err => {
+      document.getElementById('historyModalBody').innerHTML = '<p style="color:var(--red);">Could not load history.</p>';
+      console.warn('viewHistory error', err);
+    });
+}
+
+function closeHistoryModal(){
+  document.getElementById('historyModal').style.display = 'none';
 }
 
 // --- Store screen ---
@@ -750,8 +921,15 @@ function renderStoreScreen(rows){
   const sorted = [...rows].sort((a,b)=>(b.age||0)-(a.age||0));
   document.getElementById('storeScreenTableBody').innerHTML = sorted.map(r=>{
     const tn = r.transfer||'';
-    const remVal = (remarksMap[tn]||'').replace(/"/g,'&quot;');
+    const currentRemark = remarksMap[tn] || '';
+    const reasons = reasonsForFlow(r.flow);
+    const isKnown = reasons.includes(currentRemark);
+    const selectedReason = currentRemark ? (isKnown ? currentRemark : 'Others') : '';
+    const otherVal = (currentRemark && !isKnown) ? currentRemark : '';
     const st = statusMap[tn] || { status:'Not Submitted', clusterRemarks:'' };
+    const options = ['<option value="">Select a reason…</option>']
+      .concat(reasons.map(rs=>'<option value="'+rs.replace(/"/g,'&quot;')+'"'+(rs===selectedReason?' selected':'')+'>'+rs+'</option>'))
+      .concat(['<option value="Others"'+(selectedReason==='Others'?' selected':'')+'>Others</option>']);
     return '<tr class="'+(r.age!=null && r.age>10?'crit':'')+'">'+
       '<td>'+r.flow.replace('Pending ','')+'</td>'+
       '<td>'+tn+'</td>'+
@@ -760,11 +938,17 @@ function renderStoreScreen(rows){
       '<td>'+fmtDate(r.drivingDate)+'</td>'+
       '<td>'+(r.age==null?'—':r.age)+'</td>'+
       '<td>'+r.slab+'</td>'+
-      '<td>'+statusPillHtml(st.status)+'</td>'+
+      '<td>'+statusPillHtml(st.status)+' '+historyLinkHtml(tn)+'</td>'+
       '<td>'+(st.clusterRemarks ? st.clusterRemarks.replace(/</g,'&lt;') : '<span style="color:var(--ink-mute);">—</span>')+'</td>'+
-      '<td><input type="text" class="remark-input" data-tn="'+tn+'" data-code="'+SESSION.password+'" value="'+remVal+'" placeholder="Add remark…" oninput="updateRemark(this)" onblur="submitRemarkToLive(this)"></td>'+
+      '<td>'+
+        '<select id="reasonSelect_'+tn+'" onchange="toggleOtherInput(\''+tn+'\')">'+options.join('')+'</select>'+
+        '<div id="otherWrap_'+tn+'" style="display:'+(selectedReason==='Others'?'block':'none')+'; margin-top:6px;">'+
+          '<input type="text" id="otherInput_'+tn+'" class="remark-input" placeholder="Write your remark…" value="'+otherVal.replace(/"/g,'&quot;')+'">'+
+        '</div>'+
+      '</td>'+
+      '<td><button id="submitBtn_'+tn+'" onclick="submitStoreReason(\''+tn+'\')">Submit</button></td>'+
       '</tr>';
-  }).join('') || '<tr><td colspan="10" style="color:var(--ink-mute);">No pending transfer orders for this store.</td></tr>';
+  }).join('') || '<tr><td colspan="11" style="color:var(--ink-mute);">No pending transfer orders for this store.</td></tr>';
 }
 
 // --- Cluster manager screen ---
@@ -796,6 +980,7 @@ function renderClusterScreen(rows){
     '<div class="kpi c-orange"><div class="label">Pending receiving</div><div class="value">'+pr+'</div></div>'+
     '<div class="kpi c-teal"><div class="label">Remarks added</div><div class="value">'+withRemark+'</div></div>'+
     '<div class="kpi c-teal"><div class="label">Signed off</div><div class="value">'+signedOff+'</div></div>';
+  renderReasonTables(rows.filter(r=>r.flow==='Pending Dispatch'), rows.filter(r=>r.flow==='Pending Receiving'), 'clusterReasonPDBody', 'clusterReasonPRBody');
   const sorted = [...rows].sort((a,b)=>(b.age||0)-(a.age||0));
   document.getElementById('clusterScreenTableBody').innerHTML = sorted.map(r=>{
     const tn = r.transfer||'';
@@ -811,7 +996,7 @@ function renderClusterScreen(rows){
       '<td>'+(r.age==null?'—':r.age)+'</td>'+
       '<td>'+r.slab+'</td>'+
       '<td>'+(remVal ? remVal.replace(/</g,'&lt;') : '<span style="color:var(--ink-mute);">—</span>')+'</td>'+
-      '<td>'+statusPillHtml(st.status)+'</td>'+
+      '<td>'+statusPillHtml(st.status)+' '+historyLinkHtml(tn)+'</td>'+
       '<td>'+actionCell+'</td>'+
       '</tr>';
   }).join('') || '<tr><td colspan="10" style="color:var(--ink-mute);">No pending transfer orders for this cluster.</td></tr>';
@@ -874,6 +1059,7 @@ function renderRegionScreen(rows){
   document.getElementById('regionScreenKpis').innerHTML =
     '<div class="kpi"><div class="label">Pending dispatch</div><div class="value">'+pd+'</div></div>'+
     '<div class="kpi c-orange"><div class="label">Pending receiving</div><div class="value">'+pr+'</div></div>';
+  renderReasonTables(rows.filter(r=>r.flow==='Pending Dispatch'), rows.filter(r=>r.flow==='Pending Receiving'), 'regionReasonPDBody', 'regionReasonPRBody');
 
   const cmCounts = {};
   rows.forEach(r=>{ cmCounts[r.cm] = (cmCounts[r.cm]||0)+1; });
@@ -912,7 +1098,7 @@ function renderRegionScreen(rows){
       '<td>'+(r.age==null?'—':r.age)+'</td>'+
       '<td>'+r.slab+'</td>'+
       '<td>'+(remVal ? remVal.replace(/</g,'&lt;') : '<span style="color:var(--ink-mute);">—</span>')+'</td>'+
-      '<td>'+statusPillHtml(st.status)+'</td>'+
+      '<td>'+statusPillHtml(st.status)+' '+historyLinkHtml(tn)+'</td>'+
       '<td>'+actionCell+'</td>'+
       '</tr>';
   }).join('') || '<tr><td colspan="10" style="color:var(--ink-mute);">No pending transfer orders for this region.</td></tr>';
@@ -1106,6 +1292,23 @@ function processWorkbook(wb, fname){
       cm: (r['Cluster Manager Name'] && r['Cluster Manager Name'] !== '-') ? r['Cluster Manager Name'] : 'Unassigned',
       div: r['Region Division'] || 'Unassigned'
     };
+  });
+
+  // Known Node Master data errors, corrected here so every future upload is
+  // right without anyone having to remember to fix the source Excel first.
+  // Verified against the Compliance system's authoritative store mapping:
+  const CLUSTER_MANAGER_FIXES = {
+    'S5008LUK':'Syed Bilal Hussain', 'S5009BMH':'Syed Bilal Hussain',
+    'S5010SOM':'Syed Bilal Hussain', 'S5012HBK':'Syed Bilal Hussain'
+  };
+  Object.keys(CLUSTER_MANAGER_FIXES).forEach(code=>{
+    if(nodeMap[code]) nodeMap[code].cm = CLUSTER_MANAGER_FIXES[code];
+  });
+  // Usman Saeed's whole cluster (Region Division C3) belongs to Ali Hyder's
+  // CENTRAL region — three of his stores were inconsistently tagged NORTH
+  // in the source data despite being the same cluster/division as the rest.
+  Object.keys(nodeMap).forEach(code=>{
+    if(nodeMap[code].cm === 'Usman Saeed') nodeMap[code].region = 'CENTRAL';
   });
 
   const today = pktToday();
@@ -1364,6 +1567,7 @@ function applyFilters(){
   renderTable('pr', pr.filter(r=>r.slab!=='0-2 Days'));
   renderSummaryTables(RAW.pd.filter(r=>r.slab!=='0-2 Days'), RAW.pr.filter(r=>r.slab!=='0-2 Days'));
   renderTrackingTable();
+  renderReasonTables(RAW.pd, RAW.pr, 'adminReasonPDBody', 'adminReasonPRBody');
 }
 
 function sum(arr, f){ return arr.reduce((s,r)=>s+(f(r)||0),0); }
@@ -1531,7 +1735,7 @@ function renderTable(flow, rows){
     const remVal = (remarksMap[tn]||'').replace(/"/g,'&quot;');
     const remarkCell = '<td><input type="text" class="remark-input" data-tn="'+tn+'" value="'+remVal+'" placeholder="Add remark…" oninput="updateRemark(this)" onblur="submitRemarkToLive(this)"></td>';
     const st = statusMap[tn] || { status:'Not Submitted' };
-    const reviewCell = '<td>'+statusPillHtml(st.status)+'</td>';
+    const reviewCell = '<td>'+statusPillHtml(st.status)+' '+historyLinkHtml(tn)+'</td>';
     return '<tr class="'+(r.age!=null && r.age>10 ? 'crit' : '')+'">'+
     '<td>'+tn+'</td>'+
     '<td>'+r.store+' — '+(r.storeName||'')+'</td>'+
