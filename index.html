@@ -519,7 +519,7 @@
   <div id="regionScreen" class="role-screen" style="display:none;">
     <div class="role-screen-head">
       <div>
-        <div class="login-eyebrow" id="regionScreenLabel">Regional insights — read-only</div>
+        <div class="login-eyebrow" id="regionScreenLabel">Regional insights — read-only — excludes TOs aged 0-2 days</div>
         <h2 id="regionScreenTitle">—</h2>
       </div>
       <button class="ghost" onclick="logout()">Log out</button>
@@ -898,7 +898,7 @@ function closeHistoryModal(){
 
 // --- Store screen ---
 function loadStoreScreen(){
-  document.getElementById('storeScreenLabel').textContent = 'Store view';
+  document.getElementById('storeScreenLabel').textContent = 'Store view — excludes TOs aged 0-2 days';
   document.getElementById('storeScreenTitle').textContent = 'Loading…';
   fetch(API_URL + '?action=getStoreData&code=' + encodeURIComponent(SESSION.password))
     .then(r => r.json())
@@ -906,8 +906,8 @@ function loadStoreScreen(){
       if(data.error){ document.getElementById('storeScreenTitle').textContent = 'Session invalid — please log out and back in.'; return; }
       document.getElementById('storeScreenTitle').textContent = data.storeCode + ' — ' + (data.storeName||'');
       const rows = (data.rows||[]).map(fromApiRow);
-      ingestRows(rows);
-      renderStoreScreen(rows);
+      ingestRows(rows); // full set, so status/remarks history stays tracked even for 0-2 day TOs
+      renderStoreScreen(rows.filter(r=>r.slab!=='0-2 Days')); // but nothing to act on yet, so don't ask for a remark
     })
     .catch(err => { document.getElementById('storeScreenTitle').textContent = 'Could not reach the live data source.'; console.warn(err); });
 }
@@ -955,7 +955,7 @@ function renderStoreScreen(rows){
 let clusterScreenRows = [];
 
 function loadClusterScreen(){
-  document.getElementById('clusterScreenLabel').textContent = SESSION.actingCluster ? 'Regional + cluster manager view' : 'Cluster manager view';
+  document.getElementById('clusterScreenLabel').textContent = (SESSION.actingCluster ? 'Regional + cluster manager view' : 'Cluster manager view') + ' — excludes TOs aged 0-2 days';
   document.getElementById('clusterScreenTitle').textContent = 'Loading…';
   fetch(API_URL + '?action=getClusterData&code=' + encodeURIComponent(SESSION.password))
     .then(r => r.json())
@@ -964,7 +964,7 @@ function loadClusterScreen(){
       document.getElementById('clusterScreenTitle').textContent = data.clusterManager;
       const rows = (data.rows||[]).map(fromApiRow);
       ingestRows(rows);
-      renderClusterScreen(rows);
+      renderClusterScreen(rows.filter(r=>r.slab!=='0-2 Days')); // nothing for a store to have remarked on yet
     })
     .catch(err => { document.getElementById('clusterScreenTitle').textContent = 'Could not reach the live data source.'; console.warn(err); });
 }
@@ -1048,7 +1048,7 @@ function loadRegionScreen(){
       document.getElementById('regionScreenTitle').textContent = data.region;
       const rows = (data.rows||[]).map(fromApiRow);
       ingestRows(rows);
-      renderRegionScreen(rows);
+      renderRegionScreen(rows.filter(r=>r.slab!=='0-2 Days')); // nothing for a store to have remarked on yet
     })
     .catch(err => { document.getElementById('regionScreenTitle').textContent = 'Could not reach the live data source.'; console.warn(err); });
 }
