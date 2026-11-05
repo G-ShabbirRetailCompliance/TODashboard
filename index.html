@@ -255,6 +255,18 @@
     thead th{ position:static; }
     .remark-input{ border:none; background:none; padding:2px 0; width:auto; }
   }
+
+  /* ---- Fit all columns in window (overrides earlier rules) ---- */
+  .wrap{ max-width:1600px; }
+  .table-wrap{ overflow-x:hidden; max-height:70vh; }
+  table{ table-layout:auto; width:100%; font-size:11px; }
+  thead th{ white-space:normal; padding:8px 6px; font-size:9.5px; }
+  tbody td{ white-space:normal; word-break:break-word; vertical-align:top; padding:6px; }
+  .remark-input{ width:100%; min-width:110px; }
+  td select{ width:100%; min-width:130px; font-size:11px; padding:5px; }
+  .status-pill, .review-badge{ white-space:normal; }
+  .action-btn-row{ flex-wrap:nowrap; }
+  .action-btn-row button{ padding:5px 8px; }
 </style>
 </head>
 <body>
@@ -496,7 +508,10 @@
         <div class="login-eyebrow" id="clusterScreenLabel">Cluster manager view</div>
         <h2 id="clusterScreenTitle">—</h2>
       </div>
-      <button class="ghost" onclick="logout()">Log out</button>
+      <div style="display:flex; gap:8px;">
+        <button class="export" onclick="exportClusterScreenExcel()">Export Excel</button>
+        <button class="ghost" onclick="logout()">Log out</button>
+      </div>
     </div>
     <div class="kpis" id="clusterScreenKpis"></div>
     <div class="chart-grid">
@@ -1000,6 +1015,26 @@ function renderClusterScreen(rows){
       '<td>'+actionCell+'</td>'+
       '</tr>';
   }).join('') || '<tr><td colspan="10" style="color:var(--ink-mute);">No pending transfer orders for this cluster.</td></tr>';
+}
+
+// Cluster manager Excel export — uses the same scoped rows the screen shows
+// (server already filters to this cluster; 0-2 day TOs excluded).
+function exportClusterScreenExcel(){
+  if(!clusterScreenRows.length){ alert('Nothing to export.'); return; }
+  const headers = ['Flow','Transfer No','Store Code','Store Name','Region','Route','Pending Qty',
+    'Driving Date','Age (Days)','Age Slab','Store Remark','Status','Cluster Remark','Reviewed By','Reviewed At'];
+  const rows = [...clusterScreenRows].sort((a,b)=>(b.age||0)-(a.age||0)).map(r=>[
+    r.flow.replace('Pending ',''), r.transfer||'', r.store, r.storeName||'', r.region, r.route, r.qty||0,
+    r.drivingDate ? fmtDate(r.drivingDate) : '', r.age==null ? '' : r.age, r.slab,
+    r._remark||'', r._status||'Not Submitted', r._clusterRemarks||'', r._reviewedBy||'',
+    r._reviewedAt ? new Date(r._reviewedAt).toLocaleString() : ''
+  ]);
+  const wb = buildWorkbookFromSheets([
+    { name:'Pending Dispatch',  headers, rows: rows.filter(x=>x[0]==='Dispatch') },
+    { name:'Pending Receiving', headers, rows: rows.filter(x=>x[0]==='Receiving') }
+  ]);
+  const who = (document.getElementById('clusterScreenTitle').textContent||'Cluster').replace(/[^\w]+/g,'_');
+  XLSX.writeFile(wb, 'TO_' + who + '_' + new Date().toISOString().slice(0,10) + '.xlsx');
 }
 
 function clusterActionCellHtml(tn, status, remVal){
