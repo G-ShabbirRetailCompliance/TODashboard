@@ -267,6 +267,13 @@
   .status-pill, .review-badge{ white-space:normal; }
   .action-btn-row{ flex-wrap:nowrap; }
   .action-btn-row button{ padding:5px 8px; }
+  /* ---- Clickable KPI cards + popup ---- */
+  .kpi.clickable{ cursor:pointer; }
+  .kpi.clickable:hover{ box-shadow:0 4px 14px rgba(20,40,70,.18); transform:translateY(-1px); }
+  .kpi .hint{ font-size:9.5px; color:var(--blue); margin-top:6px; font-weight:700; letter-spacing:.3px; }
+  #kpiModal .history-modal-inner{ max-width:1150px; width:96%; }
+  #kpiModal table{ width:100%; }
+  #kpiModal .kpi-modal-note{ font-size:11px; color:var(--ink-mute); margin:-8px 0 12px; }
 </style>
 </head>
 <body>
@@ -565,6 +572,17 @@
     </div>
   </div>
 
+</div>
+
+<div id="kpiModal" class="history-modal" style="display:none;" onclick="if(event.target===this) closeKpiModal()">
+  <div class="history-modal-inner">
+    <div class="history-modal-head">
+      <h3 id="kpiModalTitle">Transfer orders</h3>
+      <button class="ghost" onclick="closeKpiModal()">Close</button>
+    </div>
+    <div class="kpi-modal-note" id="kpiModalNote"></div>
+    <div id="kpiModalBody"></div>
+  </div>
 </div>
 
 <div id="historyModal" class="history-modal" style="display:none;">
@@ -930,9 +948,7 @@ function loadStoreScreen(){
 function renderStoreScreen(rows){
   const pd = rows.filter(r=>r.flow==='Pending Dispatch').length;
   const pr = rows.filter(r=>r.flow==='Pending Receiving').length;
-  document.getElementById('storeScreenKpis').innerHTML =
-    '<div class="kpi"><div class="label">Pending dispatch</div><div class="value">'+pd+'</div></div>'+
-    '<div class="kpi c-orange"><div class="label">Pending receiving</div><div class="value">'+pr+'</div></div>';
+  renderKpiCards('storeScreenKpis', rows.filter(r=>r.flow==='Pending Dispatch'), rows.filter(r=>r.flow==='Pending Receiving'));
   const sorted = [...rows].sort((a,b)=>(b.age||0)-(a.age||0));
   document.getElementById('storeScreenTableBody').innerHTML = sorted.map(r=>{
     const tn = r.transfer||'';
@@ -990,11 +1006,9 @@ function renderClusterScreen(rows){
   const pr = rows.filter(r=>r.flow==='Pending Receiving').length;
   const withRemark = rows.filter(r=>remarksMap[r.transfer]).length;
   const signedOff = rows.filter(r=>{ const s=statusMap[r.transfer]; return s && s.status==='Signed Off'; }).length;
-  document.getElementById('clusterScreenKpis').innerHTML =
-    '<div class="kpi"><div class="label">Pending dispatch</div><div class="value">'+pd+'</div></div>'+
-    '<div class="kpi c-orange"><div class="label">Pending receiving</div><div class="value">'+pr+'</div></div>'+
+  renderKpiCards('clusterScreenKpis', rows.filter(r=>r.flow==='Pending Dispatch'), rows.filter(r=>r.flow==='Pending Receiving'),
     '<div class="kpi c-teal"><div class="label">Remarks added</div><div class="value">'+withRemark+'</div></div>'+
-    '<div class="kpi c-teal"><div class="label">Signed off</div><div class="value">'+signedOff+'</div></div>';
+    '<div class="kpi c-teal"><div class="label">Signed off</div><div class="value">'+signedOff+'</div></div>');
   renderReasonTables(rows.filter(r=>r.flow==='Pending Dispatch'), rows.filter(r=>r.flow==='Pending Receiving'), 'clusterReasonPDBody', 'clusterReasonPRBody');
   const sorted = [...rows].sort((a,b)=>(b.age||0)-(a.age||0));
   document.getElementById('clusterScreenTableBody').innerHTML = sorted.map(r=>{
@@ -1091,9 +1105,7 @@ function loadRegionScreen(){
 function renderRegionScreen(rows){
   const pd = rows.filter(r=>r.flow==='Pending Dispatch').length;
   const pr = rows.filter(r=>r.flow==='Pending Receiving').length;
-  document.getElementById('regionScreenKpis').innerHTML =
-    '<div class="kpi"><div class="label">Pending dispatch</div><div class="value">'+pd+'</div></div>'+
-    '<div class="kpi c-orange"><div class="label">Pending receiving</div><div class="value">'+pr+'</div></div>';
+  renderKpiCards('regionScreenKpis', rows.filter(r=>r.flow==='Pending Dispatch'), rows.filter(r=>r.flow==='Pending Receiving'));
   renderReasonTables(rows.filter(r=>r.flow==='Pending Dispatch'), rows.filter(r=>r.flow==='Pending Receiving'), 'regionReasonPDBody', 'regionReasonPRBody');
 
   const cmCounts = {};
@@ -1607,33 +1619,66 @@ function applyFilters(){
 
 function sum(arr, f){ return arr.reduce((s,r)=>s+(f(r)||0),0); }
 
-function renderKPIs(pd, pr){
-  const pdAge2 = pd.filter(r=>r.slab!=='0-2 Days');
-  const prAge2 = pr.filter(r=>r.slab!=='0-2 Days');
-  const pdOver10 = pd.filter(r=>r.age!=null && r.age>10).length;
-  const prOver10 = pr.filter(r=>r.age!=null && r.age>10).length;
-  const pdOver20 = pd.filter(r=>r.age!=null && r.age>20).length;
-  const prOver20 = pr.filter(r=>r.age!=null && r.age>20).length;
-  const pdOldest = Math.max(0, ...pd.map(r=>r.age||0));
-  const prOldest = Math.max(0, ...pr.map(r=>r.age||0));
-  const kpis = [
-    ['Pending dispatch TOs — aging 2+ days', pdAge2.length, 'excl. 0-2 day slab', ''],
-    ['Pending dispatch — aging 2+ days units', sum(pdAge2,r=>r.qty).toLocaleString(), 'pending qty', ''],
-    ['Pending dispatch TOs > 10 days', pdOver10, pdOver10>0?'flagged':'none', pdOver10>0?'c-red':''],
-    ['Oldest pending dispatch TO', pdOldest+'d', 'max age in view', 'c-teal'],
+function kpiDefs(pd, pr){
+  const ex = a=>a.filter(r=>r.slab!=='0-2 Days');
+  const byAge = a=>[...a].sort((x,y)=>(y.age||0)-(x.age||0));
+  const over = (a,n)=>byAge(a.filter(r=>r.age!=null && r.age>n));
+  const pdA = ex(pd), prA = ex(pr);
+  const pd10 = over(pd,10), pr10 = over(pr,10), pd20 = over(pd,20), pr20 = over(pr,20);
+  const pdOldAll = byAge(pd), prOldAll = byAge(pr);
+  const pdOldest = pdOldAll.length ? (pdOldAll[0].age||0) : 0;
+  const prOldest = prOldAll.length ? (prOldAll[0].age||0) : 0;
+  return [
+    { label:'Pending dispatch TOs — aging 2+ days', value:pdA.length, sub:'excl. 0-2 day slab', cls:'', rows:byAge(pdA), title:'Pending dispatch — aging 2+ days' },
+    { label:'Pending dispatch — aging 2+ days units', value:sum(pdA,r=>r.qty).toLocaleString(), sub:'pending qty', cls:'', rows:byAge(pdA), title:'Pending dispatch — aging 2+ days (units)' },
+    { label:'Pending dispatch TOs > 10 days', value:pd10.length, sub:pd10.length?'flagged':'none', cls:pd10.length?'c-red':'', rows:pd10, title:'Pending dispatch — older than 10 days' },
+    { label:'Oldest pending dispatch TO', value:pdOldest+'d', sub:'max age in view', cls:'c-teal', rows:pdOldAll.slice(0,10), title:'Oldest pending dispatch TOs (top 10)' },
 
-    ['Pending receiving TOs — aging 2+ days', prAge2.length, 'excl. 0-2 day slab', 'c-orange'],
-    ['Pending receiving — aging 2+ days units', sum(prAge2,r=>r.qty).toLocaleString(), 'pending qty', 'c-orange'],
-    ['Pending receiving TOs > 10 days', prOver10, prOver10>0?'flagged':'none', prOver10>0?'c-red':''],
-    ['Oldest pending receiving TO', prOldest+'d', 'max age in view', 'c-teal'],
+    { label:'Pending receiving TOs — aging 2+ days', value:prA.length, sub:'excl. 0-2 day slab', cls:'c-orange', rows:byAge(prA), title:'Pending receiving — aging 2+ days' },
+    { label:'Pending receiving — aging 2+ days units', value:sum(prA,r=>r.qty).toLocaleString(), sub:'pending qty', cls:'c-orange', rows:byAge(prA), title:'Pending receiving — aging 2+ days (units)' },
+    { label:'Pending receiving TOs > 10 days', value:pr10.length, sub:pr10.length?'flagged':'none', cls:pr10.length?'c-red':'', rows:pr10, title:'Pending receiving — older than 10 days' },
+    { label:'Oldest pending receiving TO', value:prOldest+'d', sub:'max age in view', cls:'c-teal', rows:prOldAll.slice(0,10), title:'Oldest pending receiving TOs (top 10)' },
 
-    ['Pending dispatch TOs > 20 days', pdOver20, pdOver20>0?'flagged':'none', pdOver20>0?'c-red':''],
-    ['Pending receiving TOs > 20 days', prOver20, prOver20>0?'flagged':'none', prOver20>0?'c-red':''],
+    { label:'Pending dispatch TOs > 20 days', value:pd20.length, sub:pd20.length?'flagged':'none', cls:pd20.length?'c-red':'', rows:pd20, title:'Pending dispatch — older than 20 days' },
+    { label:'Pending receiving TOs > 20 days', value:pr20.length, sub:pr20.length?'flagged':'none', cls:pr20.length?'c-red':'', rows:pr20, title:'Pending receiving — older than 20 days' }
   ];
-  document.getElementById('kpiRow').innerHTML = kpis.map(([label,val,sub,cls])=>
-    '<div class="kpi '+cls+'"><div class="label">'+label+'</div><div class="value">'+val+'</div><div class="sub">'+sub+'</div></div>'
-  ).join('');
 }
+
+// Renders the clickable card set into any container (admin, store, cluster,
+// regional) from whatever rows that role is allowed to see. extraHtml lets a
+// screen append its own non-clickable cards.
+function renderKpiCards(containerId, pd, pr, extraHtml){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const defs = kpiDefs(pd, pr);
+  window._kpiStore = window._kpiStore || {};
+  window._kpiStore[containerId] = defs;
+  el.innerHTML = defs.map((d,i)=>
+    '<div class="kpi clickable '+d.cls+'" onclick="openKpiModal(\''+containerId+'\','+i+')">'+
+      '<div class="label">'+d.label+'</div><div class="value">'+d.value+'</div>'+
+      '<div class="sub">'+d.sub+'</div><div class="hint">Click to view list</div></div>'
+  ).join('') + (extraHtml||'');
+}
+
+function openKpiModal(containerId, i){
+  const d = ((window._kpiStore||{})[containerId]||[])[i];
+  if(!d) return;
+  const esc = v => String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  document.getElementById('kpiModalTitle').textContent = d.title + ' — ' + d.rows.length + ' TO' + (d.rows.length===1?'':'s');
+  document.getElementById('kpiModalNote').textContent = 'Sorted oldest first.';
+  document.getElementById('kpiModalBody').innerHTML = d.rows.length
+    ? '<div class="table-wrap"><table><thead><tr><th>Flow</th><th>Transfer no</th><th>Store</th><th>Cluster manager</th><th>Region</th><th>Pending qty</th><th>Age (days)</th><th>Age slab</th><th>Status</th></tr></thead><tbody>'+
+      d.rows.map(r=>{
+        const st = (statusMap[r.transfer] && statusMap[r.transfer].status) || 'Not Submitted';
+        return '<tr class="'+(r.age!=null && r.age>10?'crit':'')+'"><td>'+esc(r.flow.replace('Pending ',''))+'</td><td>'+esc(r.transfer)+'</td><td>'+esc(r.store)+' — '+esc(r.storeName)+'</td><td>'+esc(r.cm)+'</td><td>'+esc(r.region)+'</td><td>'+(r.qty||0).toLocaleString()+'</td><td>'+(r.age==null?'—':r.age)+'</td><td>'+esc(r.slab)+'</td><td>'+statusPillHtml(st)+'</td></tr>';
+      }).join('')+'</tbody></table></div>'
+    : '<p style="color:var(--ink-mute);">No transfer orders in this category.</p>';
+  document.getElementById('kpiModal').style.display = 'flex';
+}
+function closeKpiModal(){ document.getElementById('kpiModal').style.display = 'none'; }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeKpiModal(); });
+
+function renderKPIs(pd, pr){ renderKpiCards('kpiRow', pd, pr); }
 
 function destroy(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
 
