@@ -274,6 +274,84 @@
   #kpiModal .history-modal-inner{ max-width:1150px; width:96%; }
   #kpiModal table{ width:100%; }
   #kpiModal .kpi-modal-note{ font-size:11px; color:var(--ink-mute); margin:-8px 0 12px; }
+
+  /* ===== v3 visual refresh (look only, all features unchanged) ===== */
+  :root{ --shadow-1:0 1px 2px rgba(18,37,68,.06),0 6px 18px -8px rgba(18,37,68,.18); --shadow-2:0 2px 4px rgba(18,37,68,.08),0 16px 32px -12px rgba(18,37,68,.28); --ease:cubic-bezier(.16,1,.3,1); --glow:#DCE8F8; --glow2:rgba(79,140,220,.45); --ga:#0B1A30; --gb:#163763; --gc:#1E5496; }
+  body{ background:radial-gradient(1200px 500px at 85% -10%,var(--glow) 0%,transparent 60%),var(--bg); font-family:"Segoe UI",Inter,Arial,sans-serif; }
+  .masthead{ background:radial-gradient(600px 220px at 90% 0%,var(--glow2),transparent 70%),linear-gradient(120deg,var(--ga) 0%,var(--gb) 55%,var(--gc) 100%); border-bottom:0; border-radius:0 0 22px 22px; padding:28px 28px 24px; box-shadow:0 14px 30px -18px rgba(11,26,48,.7); }
+  .masthead h1{ font-size:26px; letter-spacing:-.01em; }
+  .masthead .eyebrow{ color:#9DB9E0; }
+  .masthead .badge{ background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.22); border-radius:99px; padding:5px 14px; backdrop-filter:blur(6px); }
+  button{ border-radius:10px; transition:background .18s,transform .18s var(--ease),box-shadow .18s; }
+  button:active{ transform:scale(.97); }
+  button.ghost:hover{ box-shadow:var(--shadow-1); }
+  .tabs{ border-bottom:0; gap:6px; background:#fff; padding:6px; border-radius:14px; box-shadow:var(--shadow-1); width:100%; align-items:center; }
+  .tab-btn{ border-radius:10px; padding:10px 20px; margin:0; border:0; font-size:13px; color:var(--ink-soft); }
+  .tab-btn:hover{ background:var(--blue-tint); color:var(--navy); }
+  .tab-btn.active{ background:linear-gradient(135deg,var(--gb),var(--blue)); color:#fff; box-shadow:0 6px 14px -6px rgba(30,84,150,.7); }
+  /* KPI cards */
+  .kpis{ gap:16px; }
+  .kpi{ background:#fff; border:1px solid var(--line); border-left:1px solid var(--line); border-radius:16px; padding:18px 18px 14px; box-shadow:var(--shadow-1); position:relative; overflow:hidden; transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .2s; }
+  .kpi:after{ content:""; position:absolute; right:-30px; top:-30px; width:110px; height:110px; border-radius:50%; background:var(--tint,var(--blue-tint)); opacity:.7; transition:transform .5s var(--ease); }
+  .kpi.c-orange{ --tint:var(--orange-tint); --acc:var(--orange); background:#fff; }
+  .kpi.c-red{ --tint:var(--red-tint); --acc:var(--red); background:#fff; }
+  .kpi.c-teal{ --tint:var(--teal-tint); --acc:var(--teal); background:#fff; }
+  .kpi{ --acc:var(--blue); }
+  .kpi > *{ position:relative; z-index:1; }
+  .kpi .ic{ width:38px; height:38px; border-radius:11px; display:grid; place-items:center; background:var(--tint,var(--blue-tint)); color:var(--acc); margin-bottom:12px; }
+  .kpi .ic svg{ width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .kpi .label{ font-size:10.5px; margin-bottom:6px; min-height:26px; }
+  .kpi .value{ font-size:32px; letter-spacing:-.03em; }
+  .kpi.clickable:hover{ transform:translateY(-4px); box-shadow:var(--shadow-2); border-color:var(--acc); }
+  .kpi.clickable:hover:after{ transform:scale(1.5); }
+  .kpi .hint{ color:var(--acc); opacity:.0; transform:translateX(-6px); transition:all .25s var(--ease); font-size:11px; }
+  .kpi.clickable:hover .hint{ opacity:1; transform:none; }
+  /* panels */
+  .chart-card{ border-radius:16px; border:1px solid var(--line); box-shadow:var(--shadow-1); transition:box-shadow .3s var(--ease),transform .3s var(--ease); }
+  .chart-card:hover{ box-shadow:var(--shadow-2); }
+  .chart-card h3{ font-size:14px; }
+  .sec-head h2{ font-size:17px; letter-spacing:-.01em; }
+  .slicers{ border-radius:16px; border:1px solid var(--line); box-shadow:var(--shadow-1); }
+  .chip{ padding:6px 14px; border-radius:99px; transition:all .18s var(--ease); }
+  .chip:hover{ border-color:var(--blue); color:var(--blue); transform:translateY(-1px); }
+  .chip.active{ background:linear-gradient(135deg,var(--gb),var(--blue)); box-shadow:0 4px 10px -4px rgba(30,84,150,.7); }
+  .table-wrap{ border-radius:16px; border:1px solid var(--line); box-shadow:var(--shadow-1); }
+  thead th{ background:linear-gradient(180deg,var(--gb),var(--navy)); }
+  tbody tr{ transition:background .15s; }
+  tbody tr:hover{ background:var(--blue-tint)!important; }
+  tbody tr.crit td:first-child{ box-shadow:inset 3px 0 0 var(--red); }
+  .status-pill{ padding:4px 10px; }
+  .login-gate{ min-height:72vh; }
+  .login-card{ border-radius:22px; padding:40px 40px 34px; box-shadow:var(--shadow-2); border:1px solid var(--line); animation:rise .6s var(--ease) both; }
+  .login-card:before{ content:""; display:block; width:54px; height:54px; margin:0 auto 18px; border-radius:16px; background:linear-gradient(135deg,var(--gb),var(--blue)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7h13l-3-3M21 17H8l3 3'/%3E%3C/svg%3E") center/28px no-repeat; box-shadow:0 10px 22px -8px rgba(30,84,150,.7); }
+  .login-card input{ border-radius:12px; }
+  .login-card input:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px var(--blue-tint); }
+  .role-screen-head h2{ font-size:24px; letter-spacing:-.01em; }
+  @keyframes rise{ from{ opacity:0; transform:translateY(14px);} to{ opacity:1; transform:none;} }
+  .kpi{ animation:rise .5s var(--ease) both; }
+  .kpi:nth-child(2){animation-delay:.04s}.kpi:nth-child(3){animation-delay:.08s}.kpi:nth-child(4){animation-delay:.12s}.kpi:nth-child(5){animation-delay:.16s}.kpi:nth-child(6){animation-delay:.2s}.kpi:nth-child(7){animation-delay:.24s}.kpi:nth-child(8){animation-delay:.28s}
+  /* popup becomes a slide-in side panel */
+  #kpiModal{ align-items:stretch; justify-content:flex-end; background:rgba(10,20,35,.5); backdrop-filter:blur(2px); }
+  #kpiModal .history-modal-inner{ border-radius:20px 0 0 20px; max-width:860px; width:96%; max-height:none; height:100%; animation:slidein .45s var(--ease) both; }
+  @keyframes slidein{ from{ transform:translateX(100%);} to{ transform:none;} }
+  .history-modal-head h3{ font-size:17px; }
+  @media (max-width:900px){ .kpis{ grid-template-columns:repeat(2,1fr);} .chart-grid{ grid-template-columns:1fr;} .slicers{ grid-template-columns:1fr;} }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } }
+
+  /* ===== design options (skins) ===== */
+  :root[data-skin="emerald"]{ --navy:#0F2E2A; --navy-deep:#091F1C; --blue:#0F766E; --blue-tint:#E3F2EF; --bg:#F1F6F5; --glow:#D3EAE5; --glow2:rgba(45,170,150,.45); --ga:#08231F; --gb:#0F4A43; --gc:#13806F; }
+  :root[data-skin="indigo"]{ --navy:#1E1B4B; --navy-deep:#14123A; --blue:#4F46E5; --blue-tint:#EEF0FF; --bg:#F5F5FB; --glow:#E0E3FB; --glow2:rgba(129,120,255,.5); --ga:#17143F; --gb:#312E81; --gc:#4F46E5; }
+  :root[data-skin="graphite"]{ --navy:#111827; --navy-deep:#0B0F19; --blue:#374151; --blue-tint:#EEF0F3; --bg:#F4F5F7; --glow:#E3E6EB; --glow2:rgba(156,163,175,.4); --ga:#0B0F19; --gb:#1F2937; --gc:#4B5563; }
+  #skinBar{ position:fixed; right:16px; bottom:calc(14px + env(safe-area-inset-bottom,0px)); z-index:40; display:flex; gap:6px; align-items:center; background:#fff; padding:6px 10px; border-radius:99px; box-shadow:var(--shadow-2); border:1px solid var(--line); }
+  #skinBar span{ font-size:11px; font-weight:700; color:var(--ink-mute); margin-right:2px; }
+  #skinBar button{ width:22px; height:22px; padding:0; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px var(--line); }
+  #skinBar button[aria-pressed="true"]{ box-shadow:0 0 0 2px var(--navy); }
+  /* archive tab */
+  .arch-tools{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0 12px; }
+  .arch-tools input[type=search]{ flex:1; min-width:220px; padding:9px 12px; border:1.3px solid var(--line); border-radius:10px; font:inherit; font-size:12.5px; }
+  .arch-tools input[type=search]:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px var(--blue-tint); }
+  .arch-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .arch-opt{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:var(--ink-soft); margin-right:10px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -329,6 +407,7 @@
       <span id="loadedFileName" style="font-size:12px; color:var(--navy); font-weight:700;"></span>
       <span>
         <button class="ghost" onclick="document.getElementById('fileInput').click()">Replace file</button>
+        <label class="arch-opt" title="Copy the current pending list into the Archive sheet before replacing it"><input type="checkbox" id="archiveChk" checked> Archive previous data</label>
         <button class="live-publish" id="publishBtn" onclick="publishToLive()" style="display:none;">Publish to live dashboard</button>
       </span>
     </div>
@@ -336,6 +415,7 @@
     <div class="tabs" id="tabsBar">
       <button class="tab-btn active" data-tab="dash" onclick="showTab('dash')">Dashboard</button>
       <button class="tab-btn" data-tab="summary" onclick="showTab('summary')">Cluster Manager Summary</button>
+      <button class="tab-btn" data-tab="archive" onclick="showTab('archive')">Archive &amp; History</button>
       <span style="flex:1;"></span>
       <button class="ghost" onclick="logout()" style="margin-left:auto;">Log out</button>
     </div>
@@ -486,6 +566,11 @@
       </div>
     </div>
 
+    <div id="tabArchive" class="tab-panel">
+      <div class="sec-head"><h2>Transfer order lifecycle</h2><span class="n">Every TO ever published. Repeated = came back after being cleared</span></div>
+      <div id="archiveBody"></div>
+    </div>
+
     <div id="tabStoreEntry" class="tab-panel" style="display:none;"></div>
     <div id="tabClusterEntry" class="tab-panel" style="display:none;"></div>
     <div id="tabRegionEntry" class="tab-panel" style="display:none;"></div>
@@ -574,6 +659,13 @@
 
 </div>
 
+<div id="skinBar" role="group" aria-label="Design option"><span>Design</span>
+  <button type="button" data-skin="ocean" aria-label="Ocean" style="background:#1E5496"></button>
+  <button type="button" data-skin="emerald" aria-label="Emerald" style="background:#0F766E"></button>
+  <button type="button" data-skin="indigo" aria-label="Indigo" style="background:#4F46E5"></button>
+  <button type="button" data-skin="graphite" aria-label="Graphite" style="background:#374151"></button>
+</div>
+
 <div id="kpiModal" class="history-modal" style="display:none;" onclick="if(event.target===this) closeKpiModal()">
   <div class="history-modal-inner">
     <div class="history-modal-head">
@@ -598,6 +690,18 @@
 <script>
 if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
 Chart.defaults.font.family = 'Arial';
+
+// Design options: remembered per browser, purely visual.
+function setSkin(n){
+  document.documentElement.dataset.skin = n;
+  document.querySelectorAll('#skinBar button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.skin===n)));
+  try{ localStorage.setItem('to_dashboard_skin', n); }catch(e){}
+}
+(function(){
+  let n = 'ocean'; try{ n = localStorage.getItem('to_dashboard_skin') || 'ocean'; }catch(e){}
+  document.querySelectorAll('#skinBar button').forEach(b=>b.onclick=()=>setSkin(b.dataset.skin));
+  setSkin(n);
+})();
 
 // Predefined reasons a store picks from instead of typing free text every
 // time — "Others" always reveals a text box for anything not covered.
@@ -858,10 +962,11 @@ function publishToLive(){
   if(!RAW.pd.length && !RAW.pr.length){ alert('Upload a workbook first — nothing to publish yet.'); return; }
   const rows = RAW.pd.concat(RAW.pr).map(toApiRow);
   setLiveStatus('Publishing…');
-  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'uploadData', rows, password: SESSION.password }) })
+  const archive = !document.getElementById('archiveChk') || document.getElementById('archiveChk').checked;
+  fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'uploadData', rows, archive, password: SESSION.password }) })
     .then(r => r.json())
     .then(res => {
-      if(res.success){ setLiveStatus('Published ' + res.count + ' lines live.', 'ok'); }
+      if(res.success){ setLiveStatus('Published ' + res.count + ' lines. ' + (res.archived!=null ? 'Archived ' + res.archived + ' · new ' + res.added + ' · cleared ' + res.cleared + ' · repeated ' + res.reappeared + '.' : ''), 'ok'); }
       else{ setLiveStatus('Publish failed: ' + (res.message||'unknown error'), 'err'); }
     })
     .catch(err => { setLiveStatus('Publish failed — network or URL error.', 'err'); console.error('publishToLive error', err); });
@@ -892,7 +997,10 @@ function statusPillHtml(status){
     'Awaiting Review': ['awaiting','Awaiting Review'],
     'Re-Review': ['rereview','Re-Review'],
     'Signed Off': ['signedoff','Signed Off'],
-    'Reopened': ['reopened','Reopened']
+    'Reopened': ['reopened','Reopened'],
+    'Pending': ['awaiting','Pending'],
+    'Cleared': ['signedoff','Cleared'],
+    'Reappeared': ['reopened','Reappeared']
   };
   const [cls,label] = map[status] || ['notsubmitted', status||'Not Submitted'];
   return '<span class="status-pill '+cls+'">'+label+'</span>';
@@ -1579,6 +1687,82 @@ function showTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   document.getElementById('tabDash').classList.toggle('active', tab==='dash');
   document.getElementById('tabSummary').classList.toggle('active', tab==='summary');
+  document.getElementById('tabArchive').classList.toggle('active', tab==='archive');
+  if(tab==='archive') loadArchive();
+}
+
+// ---------------- Archive & History (admin) ----------------
+let ARCH = { life:[], log:[], f:'All', q:'' };
+function csvDownload(name, headers, rows){
+  const csv = [headers].concat(rows).map(l=>l.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+  a.download = name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+const fmtTs = v => v ? new Date(v).toLocaleString() : '—';
+const fmtDay = v => v ? new Date(v).toLocaleDateString() : '—';
+const escA = v => String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+function loadArchive(){
+  const box = document.getElementById('archiveBody');
+  box.innerHTML = '<p style="color:var(--ink-mute);">Loading archive…</p>';
+  fetch(API_URL + '?action=getArchive&code=' + encodeURIComponent(SESSION.password))
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.error){ box.innerHTML = '<p style="color:var(--red);">'+escA(d.error)+'</p>'; return; }
+      ARCH.life = d.life || []; ARCH.log = d.log || [];
+      renderArchive();
+    })
+    .catch(err=>{ box.innerHTML = '<p style="color:var(--red);">Could not load the archive.</p>'; console.warn(err); });
+}
+
+function renderArchive(){
+  const L = ARCH.life;
+  const pending = L.filter(x=>x.State==='Pending').length;
+  const cleared = L.filter(x=>x.State==='Cleared').length;
+  const repeated = L.filter(x=>Number(x.Reappeared)>0).length;
+  const card = (lab,val,cls)=>'<div class="kpi '+cls+'"><div class="label">'+lab+'</div><div class="value">'+val+'</div></div>';
+  const chips = ['All','Pending','Cleared','Repeated'].map(f=>'<div class="chip'+(ARCH.f===f?' active':'')+'" onclick="ARCH.f=\''+f+'\';renderArchive()">'+f+'</div>').join('');
+  document.getElementById('archiveBody').innerHTML =
+    '<div class="kpis">'+card('TOs tracked',L.length,'')+card('Currently pending',pending,'c-orange')+card('Cleared',cleared,'c-teal')+card('Repeated TOs',repeated,repeated?'c-red':'')+'</div>'+
+    '<div class="arch-tools"><input type="search" id="archQ" placeholder="Search transfer, store or cluster" aria-label="Search archive" value="'+escA(ARCH.q)+'" oninput="ARCH.q=this.value;renderArchiveRows()"><div class="arch-chips">'+chips+'</div><button class="export" onclick="exportArchiveCSV()">Export CSV</button></div>'+
+    '<div class="table-wrap"><table><thead><tr><th>Transfer no</th><th>Flow</th><th>Store</th><th>Cluster manager</th><th>First seen</th><th>Last seen</th><th>Times published</th><th>Repeated</th><th>State</th><th>Cleared on</th></tr></thead><tbody id="archRows"></tbody></table></div>'+
+    '<div class="sec-head"><h2>Upload batches</h2><span class="n">Each publish archives the previous pending list</span></div>'+
+    '<div class="table-wrap"><table><thead><tr><th>Batch</th><th>Published</th><th>By</th><th>Lines</th><th>New</th><th>Carried</th><th>Cleared</th><th>Repeated</th><th>Snapshot</th></tr></thead><tbody>'+
+    (ARCH.log.length ? ARCH.log.map(b=>'<tr><td>'+escA(b.BatchId)+'</td><td>'+fmtTs(b.UploadedAt)+'</td><td>'+escA(b.UploadedBy)+'</td><td>'+b.Lines+'</td><td>'+b.New+'</td><td>'+b.Carried+'</td><td>'+b.Cleared+'</td><td>'+b.Reappeared+'</td><td>'+(Number(b.Archived)>0?'<button class="ghost" onclick="downloadBatch(\''+escA(b.BatchId)+'\')">Download</button>':'<span style="color:var(--ink-mute);">Not archived</span>')+'</td></tr>').join('') : '<tr><td colspan="9" style="color:var(--ink-mute);">No batches recorded yet. The first publish after setup creates one.</td></tr>')+
+    '</tbody></table></div>';
+  renderArchiveRows();
+}
+
+function archiveFiltered(){
+  const q = ARCH.q.trim().toLowerCase();
+  return ARCH.life
+    .filter(x=> ARCH.f==='All' || (ARCH.f==='Repeated' ? Number(x.Reappeared)>0 : x.State===ARCH.f))
+    .filter(x=> !q || (x.TransferNo+' '+x.StoreCode+' '+x.StoreName+' '+x.ClusterManager).toLowerCase().includes(q))
+    .sort((a,b)=>String(b.LastSeen).localeCompare(String(a.LastSeen)));
+}
+function renderArchiveRows(){
+  const el = document.getElementById('archRows'); if(!el) return;
+  const rows = archiveFiltered();
+  el.innerHTML = rows.slice(0,300).map(x=>{
+    const tn = escA(x.TransferNo);
+    return '<tr><td><b>'+tn+'</b> '+historyLinkHtml(tn)+'</td><td>'+escA((x.Flow||'').replace('Pending ',''))+'</td><td>'+escA(x.StoreCode)+' — '+escA(x.StoreName)+'</td><td>'+escA(x.ClusterManager)+'</td><td>'+fmtDay(x.FirstSeen)+'</td><td>'+fmtDay(x.LastSeen)+'</td><td>'+x.TimesUploaded+'</td><td>'+(Number(x.Reappeared)>0?'<span class="status-pill reopened">&times;'+x.Reappeared+'</span>':'—')+'</td><td>'+statusPillHtml(x.State)+'</td><td>'+(x.State==='Cleared'?fmtDay(x.ClearedAt):'—')+'</td></tr>';
+  }).join('') || '<tr><td colspan="10" style="color:var(--ink-mute);">No transfer orders match.</td></tr>';
+}
+function exportArchiveCSV(){
+  csvDownload('TO_Lifecycle_'+new Date().toISOString().slice(0,10)+'.csv',
+    ['Transfer No','Flow','Store Code','Store Name','Cluster Manager','First Seen','Last Seen','Times Published','Repeated','State','Cleared At','Last Age'],
+    archiveFiltered().map(x=>[x.TransferNo,x.Flow,x.StoreCode,x.StoreName,x.ClusterManager,x.FirstSeen,x.LastSeen,x.TimesUploaded,x.Reappeared,x.State,x.ClearedAt,x.LastAge]));
+}
+function downloadBatch(id){
+  fetch(API_URL + '?action=getArchiveBatch&batch=' + encodeURIComponent(id) + '&code=' + encodeURIComponent(SESSION.password))
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.error){ alert(d.error); return; }
+      const H = ['Flow','TransferNo','StoreCode','StoreName','Region','SubRegion','Route','ClusterManager','PendingQty','DrivingDate','AgeDays','AgeSlab','BatchId','ArchivedAt'];
+      csvDownload('Archive_'+id+'.csv', H, (d.rows||[]).map(r=>H.map(h=>r[h])));
+    })
+    .catch(err=>{ alert('Could not download that batch.'); console.warn(err); });
 }
 
 function passesFilters(r){
@@ -1653,11 +1837,32 @@ function renderKpiCards(containerId, pd, pr, extraHtml){
   const defs = kpiDefs(pd, pr);
   window._kpiStore = window._kpiStore || {};
   window._kpiStore[containerId] = defs;
-  el.innerHTML = defs.map((d,i)=>
-    '<div class="kpi clickable '+d.cls+'" onclick="openKpiModal(\''+containerId+'\','+i+')">'+
-      '<div class="label">'+d.label+'</div><div class="value">'+d.value+'</div>'+
-      '<div class="sub">'+d.sub+'</div><div class="hint">Click to view list</div></div>'
-  ).join('') + (extraHtml||'');
+  const P = {
+    box:'<path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+    layers:'<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/>',
+    alert:'<path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18h.01"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    inbox:'<path d="M3 13l3-8h12l3 8v6H3v-6z"/><path d="M3 13h5l1 3h6l1-3h5"/>'
+  };
+  const ICON = ['box','layers','alert','clock','inbox','layers','alert','clock','alert','alert'];
+  el.innerHTML = defs.map((d,i)=>{
+    const raw = String(d.value);
+    const num = /^[\d,]+$/.test(raw) ? raw.replace(/,/g,'') : '';
+    return '<div class="kpi clickable '+d.cls+'" tabindex="0" role="button" onkeydown="if(event.key===\'Enter\')openKpiModal(\''+containerId+'\','+i+')" onclick="openKpiModal(\''+containerId+'\','+i+')">'+
+      '<div class="ic"><svg viewBox="0 0 24 24">'+P[ICON[i]]+'</svg></div>'+
+      '<div class="label">'+d.label+'</div><div class="value"'+(num?' data-n="'+num+'"':'')+'>'+raw+'</div>'+
+      '<div class="sub">'+d.sub+'</div><div class="hint">View list &rarr;</div></div>';
+  }).join('') + (extraHtml||'');
+  // one authored moment: numbers count up once on render
+  el.querySelectorAll('.value[data-n]').forEach(v=>{
+    const end = +v.dataset.n; if(!end) return;
+    const t0 = performance.now(), dur = 700;
+    (function tick(t){
+      const k = Math.min(1,(t-t0)/dur), e = 1-Math.pow(1-k,3);
+      v.textContent = Math.round(end*e).toLocaleString();
+      if(k<1) requestAnimationFrame(tick);
+    })(t0);
+  });
 }
 
 function openKpiModal(containerId, i){
