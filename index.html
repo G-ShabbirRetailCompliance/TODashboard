@@ -352,6 +352,45 @@
   .arch-tools input[type=search]:focus{ outline:none; border-color:var(--blue); box-shadow:0 0 0 4px var(--blue-tint); }
   .arch-chips{ display:flex; gap:6px; flex-wrap:wrap; }
   .arch-opt{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:var(--ink-soft); margin-right:10px; cursor:pointer; }
+
+  /* ===== v5 compact layout ===== */
+  .wrap{ max-width:1680px; padding:0 20px 48px; }
+  .masthead{ margin:0 -20px 18px; padding:16px 24px 14px; border-radius:0 0 18px 18px; }
+  .masthead h1{ font-size:21px; }
+  .masthead .eyebrow{ font-size:9.5px; margin-bottom:3px; }
+  .masthead .meta{ font-size:10.5px; line-height:1.5; }
+  .masthead .badge{ margin-top:4px; padding:3px 12px; font-size:10.5px; }
+  .tabs{ margin-bottom:14px; padding:4px; border-radius:12px; }
+  .tab-btn{ padding:7px 16px; font-size:12px; }
+  .role-screen-head{ margin-bottom:12px; }
+  .role-screen-head h2{ font-size:20px; margin-top:2px; }
+  .role-screen .login-eyebrow{ font-size:9.5px; margin-bottom:2px; }
+  .sec-head{ margin:22px 0 10px; }
+  .sec-head h2{ font-size:15px; }
+  .kpis{ grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin-bottom:16px; }
+  .kpi, .kpi.c-orange, .kpi.c-red, .kpi.c-teal{ border-left-color:var(--line); }
+  .kpi{ padding:12px 14px 10px; border-radius:12px; min-height:0; }
+  .kpi:after{ width:64px; height:64px; right:-18px; top:-18px; opacity:.55; }
+  .kpi .ic{ position:absolute; right:10px; top:10px; width:28px; height:28px; border-radius:8px; margin:0; }
+  .kpi .ic svg{ width:15px; height:15px; }
+  .kpi .label{ font-size:10px; letter-spacing:.4px; margin:0 34px 4px 0; min-height:0; line-height:1.3; }
+  .kpi .value{ font-size:26px; line-height:1.05; }
+  .kpi .sub{ font-size:10.5px; margin-top:3px; }
+  .kpi .hint{ position:absolute; right:12px; bottom:9px; margin:0; font-size:10px; }
+  .kpi.clickable:hover{ transform:translateY(-2px); }
+  .chart-card{ padding:12px 14px 10px; border-radius:12px; }
+  .chart-card h3{ font-size:13px; margin-bottom:8px; }
+  .chart-grid{ gap:14px; }
+  .chart-wrap{ height:230px; } .chart-wrap.tall{ height:290px; }
+  .slicers{ padding:12px 14px; gap:12px; border-radius:12px; }
+  .table-wrap{ border-radius:12px; }
+  table{ font-size:11px; }
+  thead th{ padding:7px 8px; }
+  tbody td{ padding:5px 8px; }
+  #skinBar{ padding:4px 8px; } #skinBar button{ width:18px; height:18px; }
+  @media (max-width:1250px){ .kpis{ grid-template-columns:repeat(4,minmax(0,1fr)); } }
+  @media (max-width:980px){ .kpis{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  @media (max-width:640px){ .kpis{ grid-template-columns:repeat(2,minmax(0,1fr)); } .masthead{ flex-direction:column; align-items:flex-start; gap:8px; } }
 </style>
 </head>
 <body>
@@ -1813,18 +1852,17 @@ function kpiDefs(pd, pr){
   const pdOldest = pdOldAll.length ? (pdOldAll[0].age||0) : 0;
   const prOldest = prOldAll.length ? (prOldAll[0].age||0) : 0;
   return [
-    { label:'Pending dispatch TOs — aging 2+ days', value:pdA.length, sub:'excl. 0-2 day slab', cls:'', rows:byAge(pdA), title:'Pending dispatch — aging 2+ days' },
-    { label:'Pending dispatch — aging 2+ days units', value:sum(pdA,r=>r.qty).toLocaleString(), sub:'pending qty', cls:'', rows:byAge(pdA), title:'Pending dispatch — aging 2+ days (units)' },
-    { label:'Pending dispatch TOs > 10 days', value:pd10.length, sub:pd10.length?'flagged':'none', cls:pd10.length?'c-red':'', rows:pd10, title:'Pending dispatch — older than 10 days' },
-    { label:'Oldest pending dispatch TO', value:pdOldest+'d', sub:'max age in view', cls:'c-teal', rows:pdOldAll.slice(0,10), title:'Oldest pending dispatch TOs (top 10)' },
+    { label:'Dispatch — aging 2+ days', value:pdA.length, sub:'TOs, excl. 0-2 days', cls:'', rows:byAge(pdA), title:'Pending dispatch — aging 2+ days' },
+    { label:'Dispatch — pending units', value:sum(pdA,r=>r.qty).toLocaleString(), sub:'aging 2+ days', cls:'', rows:byAge(pdA), title:'Pending dispatch — aging 2+ days (units)' },
+    { label:'Dispatch — over 10 days', value:pd10.length, sub:pd10.length?'flagged':'none', cls:pd10.length?'c-red':'', rows:pd10, title:'Pending dispatch — older than 10 days' },
+    { label:'Dispatch — over 20 days', value:pd20.length, sub:pd20.length?'flagged':'none', cls:pd20.length?'c-red':'', rows:pd20, title:'Pending dispatch — older than 20 days' },
+    { label:'Oldest dispatch TO', value:pdOldest+'d', sub:'max age in view', cls:'c-teal', rows:pdOldAll.slice(0,10), title:'Oldest pending dispatch TOs (top 10)' },
 
-    { label:'Pending receiving TOs — aging 2+ days', value:prA.length, sub:'excl. 0-2 day slab', cls:'c-orange', rows:byAge(prA), title:'Pending receiving — aging 2+ days' },
-    { label:'Pending receiving — aging 2+ days units', value:sum(prA,r=>r.qty).toLocaleString(), sub:'pending qty', cls:'c-orange', rows:byAge(prA), title:'Pending receiving — aging 2+ days (units)' },
-    { label:'Pending receiving TOs > 10 days', value:pr10.length, sub:pr10.length?'flagged':'none', cls:pr10.length?'c-red':'', rows:pr10, title:'Pending receiving — older than 10 days' },
-    { label:'Oldest pending receiving TO', value:prOldest+'d', sub:'max age in view', cls:'c-teal', rows:prOldAll.slice(0,10), title:'Oldest pending receiving TOs (top 10)' },
-
-    { label:'Pending dispatch TOs > 20 days', value:pd20.length, sub:pd20.length?'flagged':'none', cls:pd20.length?'c-red':'', rows:pd20, title:'Pending dispatch — older than 20 days' },
-    { label:'Pending receiving TOs > 20 days', value:pr20.length, sub:pr20.length?'flagged':'none', cls:pr20.length?'c-red':'', rows:pr20, title:'Pending receiving — older than 20 days' }
+    { label:'Receiving — aging 2+ days', value:prA.length, sub:'TOs, excl. 0-2 days', cls:'c-orange', rows:byAge(prA), title:'Pending receiving — aging 2+ days' },
+    { label:'Receiving — pending units', value:sum(prA,r=>r.qty).toLocaleString(), sub:'aging 2+ days', cls:'c-orange', rows:byAge(prA), title:'Pending receiving — aging 2+ days (units)' },
+    { label:'Receiving — over 10 days', value:pr10.length, sub:pr10.length?'flagged':'none', cls:pr10.length?'c-red':'', rows:pr10, title:'Pending receiving — older than 10 days' },
+    { label:'Receiving — over 20 days', value:pr20.length, sub:pr20.length?'flagged':'none', cls:pr20.length?'c-red':'', rows:pr20, title:'Pending receiving — older than 20 days' },
+    { label:'Oldest receiving TO', value:prOldest+'d', sub:'max age in view', cls:'c-teal', rows:prOldAll.slice(0,10), title:'Oldest pending receiving TOs (top 10)' }
   ];
 }
 
@@ -1844,7 +1882,7 @@ function renderKpiCards(containerId, pd, pr, extraHtml){
     clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     inbox:'<path d="M3 13l3-8h12l3 8v6H3v-6z"/><path d="M3 13h5l1 3h6l1-3h5"/>'
   };
-  const ICON = ['box','layers','alert','clock','inbox','layers','alert','clock','alert','alert'];
+  const ICON = ['box','layers','alert','alert','clock','inbox','layers','alert','alert','clock'];
   el.innerHTML = defs.map((d,i)=>{
     const raw = String(d.value);
     const num = /^[\d,]+$/.test(raw) ? raw.replace(/,/g,'') : '';
